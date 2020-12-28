@@ -24,8 +24,6 @@ cache:
 
 build:
   stage: build
-  tags:
-    - gitlab-org-docker
   image: docker:19.03.12
   services:
     - docker:19.03.12-dind
@@ -46,8 +44,6 @@ build:
 
 staging:
   stage: deploy
-  tags:
-    - cluster
   image: node:15.4.0-buster
   script:
     - apt-get update -qy
