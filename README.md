@@ -2,7 +2,7 @@
 
 This is the production service to predict password complexity which was developed for the course about Production Machine Learning.
 
-Python 3.8.7 is used.
+Python 3.8.5 is used.
 
 ## Notes
 
