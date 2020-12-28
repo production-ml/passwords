@@ -1,0 +1,66 @@
+stages:
+  - test-pipeline
+  - train
+  - test-api
+  - build
+  - deploy
+
+# Change pip's cache directory to be inside the project directory since we can
+# only cache local items.
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  HEROKU_STAGING_URL: https://$HEROKU_STAGING_APP.herokuapp.com/
+  DOCKER_IMAGE: password_app
+
+# Pip's cache doesn't store the python packages
+# https://pip.pypa.io/en/stable/reference/pip_install/#caching
+#
+# If you want to also cache the installed packages, you have to install
+# them in a virtualenv and cache it as well.
+cache:
+ paths:
+   - .cache/pip
+   - venv/
+
+build:
+  stage: build
+  tags:
+    - gitlab-org-docker
+  image: docker:19.03.12
+  services:
+    - docker:19.03.12-dind
+  variables:
+    IMAGE_TAG_BRANCH: $CI_REGISTRY_IMAGE/$DOCKER_IMAGE:$CI_COMMIT_REF_SLUG
+    IMAGE_TAG: $CI_REGISTRY_IMAGE/$DOCKER_IMAGE:$CI_COMMIT_SHA
+  script:
+    - echo "Building docker image"
+    - cd packages/app
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker build -t $IMAGE_TAG .
+    - docker push $IMAGE_TAG
+    - docker image tag $IMAGE_TAG $IMAGE_TAG_BRANCH
+    - docker push $IMAGE_TAG_BRANCH
+#   only:
+#     changes:
+#       - packages/app/VERSION 
+
+staging:
+  stage: deploy
+  tags:
+    - cluster
+  image: node:15.4.0-buster
+  script:
+    - apt-get update -qy
+    - apt-get install -y git ruby-dev
+    - gem install dpl
+    - cd packages/app
+    - dpl --provider=heroku --app=$HEROKU_STAGING_APP --api-key=$HEROKU_STAGING_API_KEY
+    - curl $HEROKU_STAGING_URL
+  environment:
+    name: staging
+    url: $HEROKU_STAGING_URL
+  only:
+    refs:
+      - master
+#     changes:
+#       - packages/app/VERSION
