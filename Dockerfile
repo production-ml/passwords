@@ -5,7 +5,10 @@ RUN mkdir /${PROJNAME}
 WORKDIR /${PROJNAME}
 
 # python packages
-COPY requirements.txt .
+COPY requirements/dev/Pipfile .
+COPY requirements/dev/Pipfile.lock .
+RUN pip install pipenv
+RUN pipenv lock -r > requirements.txt
 RUN pip install --use-feature=2020-resolver --no-dependencies --no-cache-dir -r requirements.txt
 
 # finally

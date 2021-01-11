@@ -1,32 +1,53 @@
-import sys
-from flask import Flask, request
-from keras.models import load_model
-from utils import rmsle, make_pass_token
+from flask import Flask, request, jsonify, render_template
+from datetime import datetime
+import os
+from lstm_model.base_model import PasswordLSTM
 
 
+# Flask instance
 app = Flask(__name__)
 
-
-def predict(x: str) -> float:
-    model = load_model('models/lstm_32emb_63d.h5', custom_objects={'rmsle': rmsle}, compile=False)
-    y_pred = model.predict(make_pass_token(x), batch_size=1)
-    return y_pred[0][0]
+# Model class instance
+password_model = PasswordLSTM(model_serialized='lstm_16emb_16d_model', tokenizer='tokenizer.pickle')
 
 
-@app.before_first_request
-def initialize():
-    print("Called only once, when the first request comes in")
+def response_json(pass_len: float):
+    """Response formatting as json"""
+    res = jsonify(
+        {
+            "status": "success",
+            "prediction": f"{pass_len:.1f}",
+            "upload_time": datetime.now()
+        }
+    )
+    return res
 
 
+@app.route('/')
+def index():
+    """Main form rendering"""
+    return render_template('index.html')
 
-@app.route("/password", methods=['GET'])
+
+@app.route("/predict", methods=['GET'])
 def main():
+    """Request for prediction processing"""
     pw = request.args.get('password')
-    pass_len = predict(pw)
-    return f'Frequency for password "{pw}": {pass_len:.3f}'
+    pass_len = password_model.predict(pw)
+    res = response_json(pass_len)
+    return res
+
+
+@app.route('/predict_press_button', methods=['POST'])
+def press_predict():
+    """Processing button press"""
+    action = request.form['action'] == 'predict'
+    pw = request.form['password']
+    pass_len = password_model.predict(pw)
+    res = response_json(pass_len)
+    return res
 
 
 if __name__ == '__main__':
-    app.run(debug=True, threaded=False)
-
-
+    # for development set "debug=True"in app.run
+    app.run(threaded=False)

@@ -6,28 +6,29 @@ Flask-ML application to predict password frequency
 
 First clone the repo locally.
 ~~~bash
-git clone https://gitlab.com/VitaliiBelov/password_app.git
+- $ git clone https://gitlab.com/production-ml/password_app
+- $ cd password_app
 ~~~
 
-Create a new virtual environment in the project directory.
+Install Pipenv and its dependencies.
 ~~~bash
-pip install virtualenv
-virtualenv venv -p python3.8 (MacOS)
+- $ pip install pipenv
 ~~~
 
 Activate the virtual environment.
 ~~~bash
-source venv/bin/activate
+- $ cd requirements/dev/
+- $ pipenv shell
+- $ pipenv install
 ~~~
 
-Install required dependencies from `requirements.txt`.
-
+Run the web application via
 ~~~bash
-pip install -r requirements.txt
+- $ cd ../..
+- $ python app.py
 ~~~
 
-Deploy the web application via
+Deactivate the virtual environment.
 ~~~bash
-python app.py
+- $ exit
 ~~~
-
