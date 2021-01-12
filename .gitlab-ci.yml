@@ -34,7 +34,7 @@ train:
     - python -V
     - pip install virtualenv
     - virtualenv venv
-    - source venv/bin/activates
+    - source venv/bin/activate
     - python -m pip install --upgrade pip
     - cd packages/app
     - pip install -r requirements.txt
