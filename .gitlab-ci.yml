@@ -31,6 +31,7 @@ train:
     - kaggle competitions download -c dmia-sport-2019-fall-intro -f train.csv -p packages/app/data/raw/
     - echo "Running ML training pipeline"
     - python -V
+    - python -m pip install --upgrade pip
     - pip install virtualenv
     - virtualenv venv
     - source venv/bin/activate
