@@ -8,7 +8,7 @@ from lstm_model.base_model import PasswordLSTM
 app = Flask(__name__)
 
 # Model class instance
-password_model = PasswordLSTM(model_serialized='lstm_16emb_16d_model', tokenizer='tokenizer.pickle')
+password_model = PasswordLSTM(model_serialized='one_epoch_model', tokenizer='tokenizer.pickle')
 
 
 def response_json(pass_len: float):
