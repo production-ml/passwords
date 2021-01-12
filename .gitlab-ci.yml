@@ -34,7 +34,7 @@ train:
     - cd packages/app
     - echo "Get data from kaggle"
     - pushd data/raw
-    - sudo apt-get install unzip -y
+    - apt-get install unzip -y
     - pip install kaggle
     - kaggle competitions download -c dmia-sport-2019-fall-intro
     - unzip dmia-sport-2019-fall-intro.zip
