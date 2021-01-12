@@ -34,10 +34,8 @@ train:
     - cd packages/app
     - echo "Get data from kaggle"
     - pushd data/raw
-    - apt-get install unzip -y
     - pip install kaggle
-    - kaggle competitions download -c dmia-sport-2019-fall-intro
-    - unzip dmia-sport-2019-fall-intro.zip
+    - kaggle competitions download -c dmia-sport-2019-fall-intro -f train.csv
     - popd
     - echo "Data is placed in ./data/raw folder"
     - pip install -r requirements.txt
