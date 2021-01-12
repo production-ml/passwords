@@ -26,18 +26,15 @@ train:
   stage: train
   image: python:3.8.5-buster
   script:
+    - echo "Get data from kaggle"
+    - pip install kaggle
+    - kaggle competitions download -c dmia-sport-2019-fall-intro -f train.csv -p packages/app/data/raw/
     - echo "Running ML training pipeline"
     - python -V
     - pip install virtualenv
     - virtualenv venv
     - source venv/bin/activate
     - cd packages/app
-    - echo "Get data from kaggle"
-    - pushd data/raw
-    - pip install kaggle
-    - kaggle competitions download -c dmia-sport-2019-fall-intro -f train.csv
-    - popd
-    - echo "Data is placed in ./data/raw folder"
     - pip install -r requirements.txt
     # - export GOOGLE_APPLICATION_CREDENTIALS="${GOOGLE_CE_KEY}"
     - python train.py
