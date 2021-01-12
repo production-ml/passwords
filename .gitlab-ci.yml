@@ -24,8 +24,6 @@ cache:
 
 train:
   stage: train
-  tags:
-    - cluster
   image: python:3.8.5-buster
   script:
     - echo "Running ML training pipeline"
