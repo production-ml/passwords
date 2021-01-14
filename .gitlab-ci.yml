@@ -35,6 +35,7 @@ train:
     - echo "Running ML training pipeline"
     - python -V
     - cd packages/app
+    - pip install pipenv
     - pipenv install --deploy
     - pipenv run train.py
     - ls -R .
