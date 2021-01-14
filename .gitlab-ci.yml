@@ -72,7 +72,7 @@ staging:
     - gem install dpl
     - cd packages/app
     # this is required because heroku use pip 9.0.2 with Pipfile.lock for selected python runtime
-    - "apt-get update || : && apt-get install python -y"
+    - "apt-get update || : && apt-get install python3 -y"
     - python -V
     - pip install pipenv
     - pipenv lock -r > requirements.txt
