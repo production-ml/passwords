@@ -17,18 +17,40 @@ Install Pipenv and its dependencies.
 
 Activate the virtual environment.
 ~~~bash
-- $ cd requirements/dev/
+- $ pipenv shell
+- $ pipenv install --dev
+~~~
+
+For deploy you should use commands:
+~~~bash
 - $ pipenv shell
 - $ pipenv install
 ~~~
 
 Run the web application via
 ~~~bash
-- $ cd ../..
 - $ python app.py
 ~~~
 
 Deactivate the virtual environment.
 ~~~bash
 - $ exit
+~~~
+
+## Jupyter enviromnet settings:
+
+Activate the virtual environment.
+~~~bash
+- $ pipenv shell
+- $ pipenv install --dev
+~~~
+
+~~~bash
+- $ python -m ipykernel install --user --name=venv38
+~~~
+
+## Launch jupyter:
+~~~bash
+- $ jupyter notebook
+- select kernel "venv38"
 ~~~
