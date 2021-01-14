@@ -4,14 +4,18 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-pandas = "*"
+flask = "*"
 keras = "*"
+tensorflow = "*"
+pandas = "*"
+sklearn = "*"
+toml = "*"
+loguru = "*"
+
+[dev-packages]
 matplotlib = "*"
 seaborn = "*"
 ipykernel = "*"
-sklearn = "*"
-
-[dev-packages]
 
 [requires]
 python_version = "3.8"
