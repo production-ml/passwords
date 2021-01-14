@@ -75,6 +75,13 @@ staging:
     - python3 -V
     - "apt-get update || : && apt-get install python3-pip -y"
     - pip3 install pipenv
+    # install pyenv to provide required python version for pipenv
+    - curl https://pyenv.run | bash
+    - export PATH="/root/.pyenv/bin:$PATH"
+    - eval "$(pyenv init -)"
+    - eval "$(pyenv virtualenv-init -)"
+    - pyenv install 3.8.5
+    # generate requirements.txt
     - pipenv lock -r > requirements.txt
     - git add requirements.txt
     - git commit -m 'add requirements.txt for heroku build'
