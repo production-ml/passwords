@@ -11,6 +11,8 @@ variables:
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
   HEROKU_STAGING_URL: https://$HEROKU_STAGING_APP.herokuapp.com/
   DOCKER_IMAGE: password_app
+  # tells pipenv where to keep virtualenvs
+  WORKON_HOME: venv/
 
 # Pip's cache doesn't store the python packages
 # https://pip.pypa.io/en/stable/reference/pip_install/#caching
@@ -32,18 +34,13 @@ train:
     - kaggle competitions download -c dmia-sport-2019-fall-intro -f Xtest.csv -p packages/app/data/raw/
     - echo "Running ML training pipeline"
     - python -V
-    - pip install virtualenv
-    - virtualenv venv
-    - source venv/bin/activate
-    - python -m pip install --upgrade pip
     - cd packages/app
-    - pip install -r requirements.txt
-    # - export GOOGLE_APPLICATION_CREDENTIALS="${GOOGLE_CE_KEY}"
-    - python train.py
+    - pipenv install --deploy
+    - pipenv run train.py
     - ls -R .
 #  only:
 #    changes:
-#      - packages/pipeline/VERSION
+#      - packages/app/VERSION
 
 build:
   stage: build
