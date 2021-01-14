@@ -8,7 +8,9 @@ from lstm_model.base_model import PasswordLSTM
 app = Flask(__name__)
 
 # Model class instance
-password_model = PasswordLSTM(model_serialized='one_epoch_model', tokenizer='tokenizer.pickle')
+password_model = PasswordLSTM(
+    model_serialized="one_epoch_model", tokenizer="tokenizer.pickle"
+)
 
 
 def response_json(pass_len: float):
@@ -17,37 +19,37 @@ def response_json(pass_len: float):
         {
             "status": "success",
             "prediction": f"{pass_len:.1f}",
-            "upload_time": datetime.now()
+            "upload_time": datetime.now(),
         }
     )
     return res
 
 
-@app.route('/')
+@app.route("/")
 def index():
     """Main form rendering"""
-    return render_template('index.html')
+    return render_template("index.html")
 
 
-@app.route("/predict", methods=['GET'])
+@app.route("/predict", methods=["GET"])
 def main():
     """Request for prediction processing"""
-    pw = request.args.get('password')
+    pw = request.args.get("password")
     pass_len = password_model.predict(pw)
     res = response_json(pass_len)
     return res
 
 
-@app.route('/predict_press_button', methods=['POST'])
+@app.route("/predict_press_button", methods=["POST"])
 def press_predict():
     """Processing button press"""
-    action = request.form['action'] == 'predict'
-    pw = request.form['password']
+    action = request.form["action"] == "predict"
+    pw = request.form["password"]
     pass_len = password_model.predict(pw)
     res = response_json(pass_len)
     return res
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # for development set "debug=True"in app.run
     app.run(threaded=False)

@@ -1,4 +1,4 @@
-## Passwords_app
+# Passwords_app
 
 Flask-ML application to predict password frequency
 
@@ -54,3 +54,7 @@ Activate the virtual environment.
 - $ jupyter notebook
 - select kernel "venv38"
 ~~~
+
+## Development
+
+To commit changes, first run `pre-commit install`. If you have no pre-commit installed, you can do it following instructiosn at https://pre-commit.com
