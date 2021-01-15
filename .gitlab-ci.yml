@@ -16,13 +16,13 @@ variables:
 
 # Pip's cache doesn't store the python packages
 # https://pip.pypa.io/en/stable/reference/pip_install/#caching
-#
 # If you want to also cache the installed packages, you have to install
 # them in a virtualenv and cache it as well.
 cache:
  paths:
    - .cache/pip
    - venv/
+   - .pyenv/cache
 
 # train:
 #   stage: train
@@ -68,9 +68,11 @@ staging:
   image: node:15.4.0-buster
   script:
     - apt-get update -qy
-    - apt-get install -y git ruby-dev
+    - apt-get install -y git ruby-dev tree
     - gem install dpl
+    - tree -a .
     - cd packages/app
+    - tree -a .
     # this is required because heroku use pip 9.0.2 with Pipfile.lock for selected python runtime
     - python3 -V
     - "apt-get update || : && apt-get install python3-pip -y"
@@ -80,6 +82,7 @@ staging:
     - export PATH="/root/.pyenv/bin:$PATH"
     - eval "$(pyenv init -)"
     - eval "$(pyenv virtualenv-init -)"
+    - mkdir -p $(pyenv root)/cache
     - pyenv install 3.8.5
     # generate requirements.txt
     - pipenv lock -r > requirements.txt
