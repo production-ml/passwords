@@ -88,7 +88,7 @@ staging:
     # - git add requirements.txt
     # - git commit -m 'add requirements.txt for heroku build'
     # do the actual deploy
-    - rm Pipfile Pipfile.lock
+    - rm -rf Pipfile Pipfile.lock .git
     - dpl --provider=heroku --app=$HEROKU_STAGING_APP --api-key=$HEROKU_STAGING_API_KEY --skip-cleanup
     - curl $HEROKU_STAGING_URL
   environment:
