@@ -7,10 +7,12 @@ from lstm_model.base_model import PasswordLSTM
 # Flask instance
 app = Flask(__name__)
 
+
 # Model class instance
 password_model = PasswordLSTM(
     model_serialized="one_epoch_model", tokenizer="tokenizer.pickle"
 )
+
 
 
 def response_json(pass_len: float):
@@ -49,7 +51,6 @@ def press_predict():
     res = response_json(pass_len)
     return res
 
-
 if __name__ == "__main__":
     # for development set "debug=True"in app.run
-    app.run(threaded=False)
+    app.run(host="0.0.0.0", threaded=False)

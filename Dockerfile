@@ -16,4 +16,6 @@ EXPOSE 5000
 ENV FLASK_RUN_PORT=5000
 
 # run the command
+RUN useradd -m myuser
+USER myuser
 CMD ["python", "./app.py"]
