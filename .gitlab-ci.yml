@@ -24,44 +24,44 @@ cache:
    - venv/
    - .pyenv/cache
 
-# train:
-#   stage: train
-#   image: python:3.8.5-buster
-#   script:
-#     - echo "Get data from kaggle"
-#     - pip install kaggle
-#     - kaggle competitions download -c dmia-sport-2019-fall-intro -f train.csv -p packages/app/data/raw/
-#     - kaggle competitions download -c dmia-sport-2019-fall-intro -f Xtest.csv -p packages/app/data/raw/
-#     - echo "Running ML training pipeline"
-#     - python -V
-#     - cd packages/app
-#     - pip install pipenv
-#     - pipenv install --deploy
-#     - pipenv run python train.py
-#     - ls -R .
-#   only:
-#     changes:
-#       - packages/app/VERSION
+train:
+  stage: train
+  image: python:3.8.5-buster
+  script:
+    - echo "Get data from kaggle"
+    - pip install kaggle
+    - kaggle competitions download -c dmia-sport-2019-fall-intro -f train.csv -p packages/app/data/raw/
+    - kaggle competitions download -c dmia-sport-2019-fall-intro -f Xtest.csv -p packages/app/data/raw/
+    - echo "Running ML training pipeline"
+    - python -V
+    - cd packages/app
+    - pip install pipenv
+    - pipenv install --deploy
+    - pipenv run python train.py
+    - ls -R .
+  only:
+    changes:
+      - packages/app/VERSION
 
-# build:
-#   stage: build
-#   image: docker:19.03.12
-#   services:
-#     - docker:19.03.12-dind
-#   variables:
-#     IMAGE_TAG_BRANCH: $CI_REGISTRY_IMAGE/$DOCKER_IMAGE:$CI_COMMIT_REF_SLUG
-#     IMAGE_TAG: $CI_REGISTRY_IMAGE/$DOCKER_IMAGE:$CI_COMMIT_SHA
-#   script:
-#     - echo "Building docker image"
-#     - cd packages/app
-#     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-#     - docker build -t $IMAGE_TAG .
-#     - docker push $IMAGE_TAG
-#     - docker image tag $IMAGE_TAG $IMAGE_TAG_BRANCH
-#     - docker push $IMAGE_TAG_BRANCH
-#   only:
-#     changes:
-#       - packages/app/VERSION
+build:
+  stage: build
+  image: docker:19.03.12
+  services:
+    - docker:19.03.12-dind
+  variables:
+    IMAGE_TAG_BRANCH: $CI_REGISTRY_IMAGE/$DOCKER_IMAGE:$CI_COMMIT_REF_SLUG
+    IMAGE_TAG: $CI_REGISTRY_IMAGE/$DOCKER_IMAGE:$CI_COMMIT_SHA
+  script:
+    - echo "Building docker image"
+    - cd packages/app
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker build -t $IMAGE_TAG .
+    - docker push $IMAGE_TAG
+    - docker image tag $IMAGE_TAG $IMAGE_TAG_BRANCH
+    - docker push $IMAGE_TAG_BRANCH
+  only:
+    changes:
+      - packages/app/VERSION
 
 staging:
   stage: deploy
