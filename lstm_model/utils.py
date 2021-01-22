@@ -2,6 +2,7 @@ import tensorflow as tf
 import re
 import pickle
 from keras.preprocessing.sequence import pad_sequences
+from flask import jsonify
 
 MAX_PASS_LEN = 42
 
@@ -32,3 +33,15 @@ def list_merge(lstlst):
     for lst in lstlst:
         all.extend(lst)
     return all
+
+
+def response_json(password: str,  freq: float):
+    """Response formatting as json"""
+    res = jsonify(
+        {
+            "status": "success",
+            "password": password,
+            "prediction": f"{freq:.1f}"
+        }
+    )
+    return res

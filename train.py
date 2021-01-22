@@ -6,7 +6,7 @@ def main():
     password_model.fit(
         train_file="train.csv.zip", test_file="Xtest.csv.zip", epochs=1, batch_size=512
     )
-    password_model.save_tokenizer("tokenizer_2.pickle")
+    password_model.save_tokenizer("tokenizer.pickle")
     password_model.save_model("one_epoch_model")
 
 
