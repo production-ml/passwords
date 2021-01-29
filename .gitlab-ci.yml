@@ -44,6 +44,9 @@ run-pytest-on-pipeline:
     - schedules
 
 build-pipeline-docker-image:
+  image: docker:19.03.12
+  services:
+    - docker:19.03.12-dind
   stage: build-pipeline
   script:
     - echo "Building docker image"
