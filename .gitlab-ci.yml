@@ -61,6 +61,8 @@ build-pipeline-docker-image:
 train-model:
   stage: run-pipeline
   image: $PIPELINE_IMAGE_REF
+  script:
+    - sh -ux ./scripts/run_pipeline.sh
   only:
     changes:
       - packages/pipeline/**/*
