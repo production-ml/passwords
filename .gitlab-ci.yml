@@ -41,7 +41,7 @@ train:
     - ls -R .
   only:
     changes:
-      - packages/app/VERSION
+      - packages/app/**/*
 
 build:
   stage: build
@@ -93,5 +93,5 @@ staging:
   only:
     refs:
       - master
-#     changes:
-#       - packages/app/VERSION
+    changes:
+      - packages/app/**/*
