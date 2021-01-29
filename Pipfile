@@ -1,0 +1,20 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+tensorflow-cpu = "==2.3.0"
+keras = "*"
+pandas = "*"
+sklearn = "*"
+toml = "*"
+loguru = "*"
+gunicorn = "*"
+flask = "*"
+
+[dev-packages]
+kaggle = "*"
+
+[requires]
+python_full_version = "3.8.5"
