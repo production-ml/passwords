@@ -1,18 +1,27 @@
 stages:
   - test-pipeline
-  - train
+  - build-pipeline
+  - run-pipeline
+  - update-model
   - test-api
-  - build
-  - deploy
+  - build-api
+  - deploy-api
 
 # Change pip's cache directory to be inside the project directory since we can
 # only cache local items.
 variables:
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
   HEROKU_STAGING_URL: https://$HEROKU_STAGING_APP.herokuapp.com/
-  DOCKER_IMAGE: password_app
   # tells pipenv where to keep virtualenvs
   WORKON_HOME: venv/
+  API_VERSION_PATH: "packages/api/VERSION"
+  # docker image details
+  PIPELINE_IMAGE_NAME: password-pipeline
+  PIPELINE_IMAGE_REF: $CI_REGISTRY_IMAGE/$PIPELINE_IMAGE_NAME:$CI_COMMIT_REF_SLUG
+  PIPELINE_IMAGE_TAG: $CI_REGISTRY_IMAGE/$PIPELINE_IMAGE_NAME:$CI_COMMIT_SHA
+  APP_IMAGE_NAME: password-app
+  APP_IMAGE_REF: $CI_REGISTRY_IMAGE/$APP_IMAGE_NAME:$CI_COMMIT_REF_SLUG
+  APP_IMAGE_TAG: $CI_REGISTRY_IMAGE/$APP_IMAGE_NAME:$CI_COMMIT_SHA
 
 # Pip's cache doesn't store the python packages
 # https://pip.pypa.io/en/stable/reference/pip_install/#caching
@@ -24,47 +33,88 @@ cache:
    - venv/
    - .pyenv/cache
 
-train:
-  stage: train
-  image: python:3.8.5-buster
+run-pytest-on-pipeline:
+  stage: test-pipeline
   script:
-    - echo "Get data from kaggle"
-    - pip install kaggle
-    - kaggle competitions download -c dmia-sport-2019-fall-intro -f train.csv -p packages/app/data/raw/
-    - kaggle competitions download -c dmia-sport-2019-fall-intro -f Xtest.csv -p packages/app/data/raw/
-    - echo "Running ML training pipeline"
-    - python -V
-    - cd packages/app
-    - pip install pipenv
-    - pipenv install --deploy
-    - pipenv run python train.py
-    - ls -R .
+    - echo
+  only:
+    changes:
+      - packages/pipeline/**/*
+  except:
+    - schedules
+
+build-pipeline-docker-image:
+  stage: build-pipeline
+  script:
+    - echo "Building docker image"
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker build -t $PIPELINE_IMAGE_TAG .
+    - docker push $PIPELINE_IMAGE_TAG
+    - docker image tag $PIPELINE_IMAGE_TAG $PIPELINE_IMAGE_REF
+    - docker push $PIPELINE_IMAGE_REF
+  only:
+    changes:
+      - packages/pipeline/**/*
+  except:
+    - schedules
+
+train-model:
+  stage: run-pipeline
+  image: $PIPELINE_IMAGE_REF
+  only:
+    changes:
+      - packages/pipeline/**/*
+
+update-model-if-qualified:
+  stage: update-model
+  script:
+    # TODO: bump model version instead of VERSION (which could be a package version)
+    # bump semver version
+    - export VERSION=$(cat $API_VERSION_PATH | awk -F. -v OFS=. 'NF==1{print ++$NF}; NF>1{$NF=sprintf("%0*d", length($NF), ($NF+1)); print}')
+    - echo $VERSION
+    - echo $VERSION > $API_VERSION_PATH
+    # push changes to git
+    - git remote set-url origin https://dmiasport:${CI_PUSH_TOKEN}@gitlab.com/${CI_PROJECT_PATH}.git
+    - git config --global user.email "dmiasport@gmail.com"
+    - git config --global user.name "Gitlab Runner"
+    - git add $API_VERSION_PATH
+    - git commit -m "bump api version to ${VERSION}"
+    - git push --follow-tags origin HEAD:$CI_COMMIT_REF_NAME
+  only:
+    changes:
+      - packages/pipeline/**/*
+
+run-pytest-on-api:
+  stage: test-api
+  script:
+    - echo
   only:
     changes:
       - packages/app/**/*
+  except:
+    - schedules
 
-build:
-  stage: build
+build-api-docker-image:
+  stage: build-api
   image: docker:19.03.12
   services:
     - docker:19.03.12-dind
-  variables:
-    IMAGE_TAG_BRANCH: $CI_REGISTRY_IMAGE/$DOCKER_IMAGE:$CI_COMMIT_REF_SLUG
-    IMAGE_TAG: $CI_REGISTRY_IMAGE/$DOCKER_IMAGE:$CI_COMMIT_SHA
   script:
     - echo "Building docker image"
-    - cd packages/app
+    - cd package
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    - docker build -t $IMAGE_TAG .
-    - docker push $IMAGE_TAG
-    - docker image tag $IMAGE_TAG $IMAGE_TAG_BRANCH
-    - docker push $IMAGE_TAG_BRANCH
+    - docker build -t $APP_IMAGE_TAG .
+    - docker push $APP_IMAGE_TAG
+    - docker image tag $APP_IMAGE_TAG $APP_IMAGE_REF
+    - docker push $APP_IMAGE_REF
   only:
     changes:
-      - packages/app/VERSION
+      - packages/app/**/*
+  except:
+    - schedules
 
-staging:
-  stage: deploy
+deploy-api-docker-image-staging:
+  stage: deploy-api
   image: node:15.4.0-buster
   script:
     - apt-get update -qy
@@ -91,7 +141,7 @@ staging:
     name: staging
     url: $HEROKU_STAGING_URL
   only:
-    refs:
-      - master
     changes:
       - packages/app/**/*
+  except:
+    - schedules
