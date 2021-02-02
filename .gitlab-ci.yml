@@ -35,6 +35,16 @@ cache:
    - venv/
    - .pyenv/cache
 
+# define template which will execute jobs upon changes in ML pipeline
+.pipeline-changes:
+  except:
+    changes:
+      - notebooks/**/*
+      - .gitignore
+      - .pre-commit-config.yaml
+      - Procfile
+      - runtime.txt
+      - README.md
 
 run-pytest-on-pipeline:
   extends: .pipeline-build
