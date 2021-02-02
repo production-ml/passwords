@@ -46,6 +46,14 @@ cache:
       - runtime.txt
       - README.md
 
+# define template which will execute jobs upon changes in ML pipeline except schedules
+# (because Gitlab treat all files as changed upon schedule CI/CD execution)
+.pipeline-build:
+  extends: .pipeline-changes
+  except:
+    refs:
+      - schedules
+
 run-pytest-on-pipeline:
   extends: .pipeline-build
   stage: test-pipeline
