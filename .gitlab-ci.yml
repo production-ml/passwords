@@ -14,8 +14,9 @@ variables:
   HEROKU_STAGING_URL: https://$HEROKU_STAGING_APP.herokuapp.com/
   # tells pipenv where to keep virtualenvs
   WORKON_HOME: venv/
-  API_VERSION_PATH: "packages/api/VERSION"
+  API_VERSION_PATH: "package/MODEL_VERSION"
   # docker image details
+  PYTHON_IMAGE: python:3.8.5-buster
   PIPELINE_IMAGE_NAME: password-pipeline
   PIPELINE_IMAGE_REF: $CI_REGISTRY_IMAGE/$PIPELINE_IMAGE_NAME:$CI_COMMIT_REF_SLUG
   PIPELINE_IMAGE_TAG: $CI_REGISTRY_IMAGE/$PIPELINE_IMAGE_NAME:$CI_COMMIT_SHA
@@ -28,20 +29,34 @@ variables:
 # If you want to also cache the installed packages, you have to install
 # them in a virtualenv and cache it as well.
 cache:
+# untracked: true
  paths:
    - .cache/pip
    - venv/
    - .pyenv/cache
 
+.pipeline-build:
+  except:
+    refs:
+      - schedules
+    changes:
+      - README.md
+      - .gitignore
+      - .pre-commit-config.yaml
+      - Procfile
+      - runtime.txt
+
 run-pytest-on-pipeline:
   stage: test-pipeline
+  extends: .pipeline-build
+  image: $PYTHON_IMAGE
   script:
     - echo
-  only:
-    changes:
-      - packages/pipeline/**/*
-  except:
-    - schedules
+#  only:
+#    changes:
+#      - packages/pipeline/**/*
+#  except:
+#    - schedules
 
 build-pipeline-docker-image:
   image: docker:19.03.12
@@ -72,6 +87,7 @@ train-model:
 
 update-model-if-qualified:
   stage: update-model
+  image: python:3.8.5-buster
   script:
     # TODO: bump model version instead of VERSION (which could be a package version)
     # bump semver version
@@ -87,7 +103,7 @@ update-model-if-qualified:
     - git push --follow-tags origin HEAD:$CI_COMMIT_REF_NAME
   only:
     changes:
-      - packages/pipeline/**/*
+      - packages/**/*
 
 run-pytest-on-api:
   stage: test-api
