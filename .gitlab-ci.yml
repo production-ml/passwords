@@ -35,34 +35,20 @@ cache:
    - venv/
    - .pyenv/cache
 
-.pipeline-build:
-  except:
-    refs:
-      - schedules
-    changes:
-      - README.md
-      - .gitignore
-      - .pre-commit-config.yaml
-      - Procfile
-      - runtime.txt
 
 run-pytest-on-pipeline:
-  stage: test-pipeline
   extends: .pipeline-build
+  stage: test-pipeline
   image: $PYTHON_IMAGE
   script:
     - echo
-#  only:
-#    changes:
-#      - packages/pipeline/**/*
-#  except:
-#    - schedules
 
 build-pipeline-docker-image:
+  extends: .pipeline-build
+  stage: build-pipeline
   image: docker:19.03.12
   services:
     - docker:19.03.12-dind
-  stage: build-pipeline
   script:
     - echo "Building docker image"
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
@@ -70,30 +56,24 @@ build-pipeline-docker-image:
     - docker push $PIPELINE_IMAGE_TAG
     - docker image tag $PIPELINE_IMAGE_TAG $PIPELINE_IMAGE_REF
     - docker push $PIPELINE_IMAGE_REF
-  only:
-    changes:
-      - packages/pipeline/**/*
-  except:
-    - schedules
 
 train-model:
+  extends: .pipeline-changes
   stage: run-pipeline
   image: $PIPELINE_IMAGE_REF
   script:
     - sh -ux ./scripts/run_pipeline.sh
-  only:
-    changes:
-      - packages/pipeline/**/*
 
 update-model-if-qualified:
+  extends: .pipeline-changes
   stage: update-model
-  image: python:3.8.5-buster
+  image: $PYTHON_IMAGE
   script:
     # TODO: bump model version instead of VERSION (which could be a package version)
     # bump semver version
     - export VERSION=$(cat $API_VERSION_PATH | awk -F. -v OFS=. 'NF==1{print ++$NF}; NF>1{$NF=sprintf("%0*d", length($NF), ($NF+1)); print}')
-    - echo $VERSION
     - echo $VERSION > $API_VERSION_PATH
+    - echo $VERSION
     # push changes to git
     - git remote set-url origin https://dmiasport:${CI_PUSH_TOKEN}@gitlab.com/${CI_PROJECT_PATH}.git
     - git config --global user.email "dmiasport@gmail.com"
@@ -101,21 +81,24 @@ update-model-if-qualified:
     - git add $API_VERSION_PATH
     - git commit -m "bump api version to ${VERSION}"
     - git push --follow-tags origin HEAD:$CI_COMMIT_REF_NAME
-  only:
-    changes:
-      - packages/**/*
 
-run-pytest-on-api:
-  stage: test-api
-  script:
-    - echo
+# define template which will execute jobs upon changes in ML API
+.api-changes:
   only:
     changes:
-      - packages/app/**/*
+      - package/**/*
   except:
     - schedules
 
+run-pytest-on-api:
+  extends: .api-changes
+  stage: test-api
+  image: $PYTHON_IMAGE
+  script:
+    - echo
+
 build-api-docker-image:
+  extends: .api-changes
   stage: build-api
   image: docker:19.03.12
   services:
@@ -128,13 +111,9 @@ build-api-docker-image:
     - docker push $APP_IMAGE_TAG
     - docker image tag $APP_IMAGE_TAG $APP_IMAGE_REF
     - docker push $APP_IMAGE_REF
-  only:
-    changes:
-      - packages/app/**/*
-  except:
-    - schedules
 
 deploy-api-docker-image-staging:
+  extends: .api-changes
   stage: deploy-api
   image: node:15.4.0-buster
   script:
@@ -161,8 +140,3 @@ deploy-api-docker-image-staging:
   environment:
     name: staging
     url: $HEROKU_STAGING_URL
-  only:
-    changes:
-      - packages/app/**/*
-  except:
-    - schedules
