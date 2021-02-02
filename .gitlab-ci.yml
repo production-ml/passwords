@@ -50,6 +50,9 @@ cache:
       - README.md
       - package/templates/**/*
       - package/app.py
+      - package/Dockerfile
+      - package/MODEL_VERSION
+      - package/requirements.txt
 
 # define template which will execute jobs upon changes in ML pipeline except schedules
 # (because Gitlab treat all files as changed upon schedule CI/CD execution)
@@ -63,12 +66,12 @@ cache:
 .api-changes:
   only:
     changes:
-      - package/.*def/incoming.**/*
+      - package/**/*
   except:
     refs:
       - schedules
-#    changes:
-#      - package/lstm_model/**/*
+    changes:
+      - package/lstm_model/**/*
 
 run-pytest-on-pipeline:
   extends: .pipeline-build
