@@ -25,5 +25,5 @@ def index():
 
 
 if __name__ == "__main__":
-    # for development set "debug=True"in app.run
+    # for development set "debug=True" in app.run
     app.run(host="0.0.0.0", threaded=False, debug=True)
