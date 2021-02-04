@@ -143,12 +143,13 @@ build-api-docker-image:
     - docker:19.03.12-dind
   script:
     - echo "Building docker image"
-    - cp Pipfile{,.lock} package
+    - cp Pipfile package/ && cp Pipfile.lock package/
     - cd package
+    - docker build -t build-image:latest .
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    - docker build -t $APP_IMAGE_TAG .
+    - docker image tag build-image:latest $APP_IMAGE_TAG
+    - docker image tag build-image:latest $APP_IMAGE_REF
     - docker push $APP_IMAGE_TAG
-    - docker image tag $APP_IMAGE_TAG $APP_IMAGE_REF
     - docker push $APP_IMAGE_REF
 
 deploy-api-docker-image-staging:
