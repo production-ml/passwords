@@ -8,7 +8,7 @@ WORKDIR /${PROJNAME}
 COPY Pipfile .
 COPY Pipfile.lock .
 RUN pip install pipenv
-RUN pipenv install --system
+RUN pipenv install --deploy --system
 
 # finally
 COPY . .

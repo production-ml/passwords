@@ -143,6 +143,7 @@ build-api-docker-image:
     - docker:19.03.12-dind
   script:
     - echo "Building docker image"
+    - cp Pipfile{,.lock} package
     - cd package
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - docker build -t $APP_IMAGE_TAG .
