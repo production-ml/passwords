@@ -40,19 +40,27 @@ cache:
 # we need to carefully list here all files which changes shouldnt trigger CI/CD
 # so it is a tradeoff of simplifying development at the cost of complicating CI/CD management
 .pipeline-changes:
-  except:
+  only:
     changes:
-      - notebooks/**/*
-      - .gitignore
-      - .pre-commit-config.yaml
-      - Procfile
-      - runtime.txt
-      - README.md
-      - package/templates/**/*
-      - package/app.py
-      - package/Dockerfile
-      - package/MODEL_VERSION
-      - package/requirements.txt
+      - package/lstm_model/**/*
+      - scripts/**/*
+      - Dockerfile
+      - Pipfile
+      - Pipfile.lock
+      - config.toml
+  # except:
+  #   changes:
+  #     - notebooks/**/*
+  #     - .gitignore
+  #     - .pre-commit-config.yaml
+  #     - Procfile
+  #     - runtime.txt
+  #     - README.md
+  #     - package/templates/**/*
+  #     - package/app.py
+  #     - package/Dockerfile
+  #     - package/MODEL_VERSION
+  #     - package/requirements.txt
 
 # define template which will execute jobs upon changes in ML pipeline except schedules
 # (because Gitlab treat all files as changed upon schedule CI/CD execution)
@@ -147,15 +155,13 @@ deploy-api-docker-image-staging:
   image: node:15.4.0-buster
   script:
     - apt-get update -qy
-    - apt-get install -y git ruby-dev tree
+    - apt-get install -y ruby-dev
     - gem install dpl
-    - cd packages/app
-    - tree -a .
     # this is required because heroku use pip 9.0.2 with Pipfile.lock for python 3.8 runtime
     - python3 -V
     - "apt-get update || : && apt-get install python3-pip -y"
     - pip3 install pipenv
-    # install pyenv to provide python 3.8 for pipenv
+    # install pyenv to provide python 3.8.5 for pipenv
     - curl https://pyenv.run | bash
     - export PATH="/root/.pyenv/bin:$PATH"
     - eval "$(pyenv init -)"
