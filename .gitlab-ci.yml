@@ -16,7 +16,8 @@ variables:
   WORKON_HOME: venv/
   MODEL_VERSION_PATH: "package/MODEL_VERSION"
   # docker image details
-  PYTHON_IMAGE: python:3.8.5-buster
+  PYTHON_VERSION: 3.8.5
+  PYTHON_IMAGE: python:${PYTHON_VERSION}-buster
   PIPELINE_IMAGE_NAME: password-pipeline
   PIPELINE_IMAGE_REF: $CI_REGISTRY_IMAGE/$PIPELINE_IMAGE_NAME:$CI_COMMIT_REF_SLUG
   PIPELINE_IMAGE_TAG: $CI_REGISTRY_IMAGE/$PIPELINE_IMAGE_NAME:$CI_COMMIT_SHA
@@ -48,19 +49,6 @@ cache:
       - Pipfile
       - Pipfile.lock
       - config.toml
-  # except:
-  #   changes:
-  #     - notebooks/**/*
-  #     - .gitignore
-  #     - .pre-commit-config.yaml
-  #     - Procfile
-  #     - runtime.txt
-  #     - README.md
-  #     - package/templates/**/*
-  #     - package/app.py
-  #     - package/Dockerfile
-  #     - package/MODEL_VERSION
-  #     - package/requirements.txt
 
 # define template which will execute jobs upon changes in ML pipeline except schedules
 # (because Gitlab treat all files as changed upon schedule CI/CD execution)
@@ -126,6 +114,9 @@ update-model-if-qualified:
   stage: update-model
   image: $PYTHON_IMAGE
   script:
+    # checking if requirements.txt is up-to-date and updating if necessary
+    - pip install pipenv
+    - pipenv lock -r > package/requirements.txt
     # bump semver version
     - export VERSION=$(cat $MODEL_VERSION_PATH | awk -F. -v OFS=. 'NF==1{print ++$NF}; NF>1{$NF=sprintf("%0*d", length($NF), ($NF+1)); print}')
     - echo $VERSION > $MODEL_VERSION_PATH
@@ -135,7 +126,8 @@ update-model-if-qualified:
     - git config --global user.email "dmiasport@gmail.com"
     - git config --global user.name "Gitlab Runner"
     - git add $API_VERSION_PATH
-    - git commit -m "bump api version to ${VERSION}"
+    - git add package/requirements.txt
+    - git commit -m "bump api version to ${VERSION}; update requirements if necessary"
     - git push --follow-tags origin HEAD:$CI_COMMIT_REF_NAME
 
 run-pytest-on-api:
@@ -172,18 +164,6 @@ deploy-api-docker-image-staging:
     - apt-get update -qy
     - apt-get install -y ruby-dev
     - gem install dpl
-    # this is required because heroku use pip 9.0.2 with Pipfile.lock for python 3.8 runtime
-    - python3 -V
-    - "apt-get update || : && apt-get install python3-pip -y"
-    - pip3 install pipenv
-    # install pyenv to provide python 3.8.5 for pipenv
-    - curl https://pyenv.run | bash
-    - export PATH="/root/.pyenv/bin:$PATH"
-    - eval "$(pyenv init -)"
-    - eval "$(pyenv virtualenv-init -)"
-    - mkdir -p $(pyenv root)/cache
-    - pyenv install 3.8.5
-    - pipenv lock -r > requirements.txt
     # do the actual deploy
     - dpl --provider=heroku --app=$HEROKU_STAGING_APP --api-key=$HEROKU_STAGING_API_KEY --skip-cleanup
     - curl $HEROKU_STAGING_URL
