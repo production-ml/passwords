@@ -165,7 +165,7 @@ deploy-api-docker-image-staging:
     - apt-get install -y ruby-dev
     - gem install dpl
     # do the actual deploy
-    - dpl --provider=heroku --app=$HEROKU_STAGING_APP --api-key=$HEROKU_STAGING_API_KEY --skip-cleanup
+    - dpl --provider=heroku --app=$HEROKU_STAGING_APP --api-key=$HEROKU_STAGING_API_KEY  # --skip-cleanup
     - curl $HEROKU_STAGING_URL
   environment:
     name: staging
