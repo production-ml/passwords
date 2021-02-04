@@ -75,13 +75,20 @@ cache:
   only:
     changes:
       - package/**/*
-      - Procfile
-      - runtime.txt
   except:
     refs:
       - schedules
     changes:
       - package/lstm_model/**/*
+
+.heroku-changes:
+  only:
+      - .slugignore
+      - Procfile
+      - runtime.txt
+  except:
+    refs:
+      - schedules
 
 run-pytest-on-pipeline:
   extends: .pipeline-build
@@ -153,7 +160,9 @@ build-api-docker-image:
     - docker push $APP_IMAGE_REF
 
 deploy-api-docker-image-staging:
-  extends: .api-changes
+  extends:
+    - .api-changes
+    - .heroku-changes
   stage: deploy-api
   image: node:15.4.0-buster
   script:
