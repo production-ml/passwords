@@ -83,6 +83,9 @@ cache:
 
 .heroku-changes:
   only:
+    changes:
+      # "extends" is able to merge hashes but not arrays, thus we need to mention package again
+      - package/**/*
       - .slugignore
       - Procfile
       - runtime.txt
