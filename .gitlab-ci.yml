@@ -14,7 +14,7 @@ variables:
   HEROKU_STAGING_URL: https://$HEROKU_STAGING_APP.herokuapp.com/
   # tells pipenv where to keep virtualenvs
   WORKON_HOME: venv/
-  API_VERSION_PATH: "package/MODEL_VERSION"
+  MODEL_VERSION_PATH: "package/MODEL_VERSION"
   # docker image details
   PYTHON_IMAGE: python:3.8.5-buster
   PIPELINE_IMAGE_NAME: password-pipeline
@@ -75,6 +75,8 @@ cache:
   only:
     changes:
       - package/**/*
+      - Procfile
+      - runtime.txt
   except:
     refs:
       - schedules
@@ -114,10 +116,9 @@ update-model-if-qualified:
   stage: update-model
   image: $PYTHON_IMAGE
   script:
-    # TODO: bump model version instead of VERSION (which could be a package version)
     # bump semver version
-    - export VERSION=$(cat $API_VERSION_PATH | awk -F. -v OFS=. 'NF==1{print ++$NF}; NF>1{$NF=sprintf("%0*d", length($NF), ($NF+1)); print}')
-    - echo $VERSION > $API_VERSION_PATH
+    - export VERSION=$(cat $MODEL_VERSION_PATH | awk -F. -v OFS=. 'NF==1{print ++$NF}; NF>1{$NF=sprintf("%0*d", length($NF), ($NF+1)); print}')
+    - echo $VERSION > $MODEL_VERSION_PATH
     - echo $VERSION
     # push changes to git
     - git remote set-url origin https://dmiasport:${CI_PUSH_TOKEN}@gitlab.com/${CI_PROJECT_PATH}.git
