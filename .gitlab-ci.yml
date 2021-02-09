@@ -182,5 +182,5 @@ deploy-api-production:
     - apk add --no-cache docker-compose
     - docker-compose up --build --detach
   environment:
-    name: staging
-    url: $HEROKU_STAGING_URL
+    name: production
+    url: $PRODUCTION_URL
