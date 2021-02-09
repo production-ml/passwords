@@ -81,6 +81,13 @@ cache:
     refs:
       - schedules
 
+.infra-changes:
+  only:
+    changes:
+      # "extends" is able to merge hashes but not arrays, thus we need to mention package again
+      - package/**/*
+      - config/**/*
+
 run-pytest-on-pipeline:
   extends: .pipeline-build
   stage: test-pipeline
@@ -130,51 +137,51 @@ update-model-if-qualified:
     - git commit -m "bump api version to ${VERSION}; update requirements if necessary"
     - git push --follow-tags origin HEAD:$CI_COMMIT_REF_NAME
 
-run-pytest-on-api:
-  extends: .api-changes
-  stage: test-api
-  image: $PYTHON_IMAGE
-  script:
-    - echo
+# run-pytest-on-api:
+#   extends: .api-changes
+#   stage: test-api
+#   image: $PYTHON_IMAGE
+#   script:
+#     - echo
 
-build-api-docker-image:
-  extends: .api-changes
-  stage: build-api
-  image: docker:19.03.12
-  services:
-    - docker:19.03.12-dind
-  script:
-    - echo "Building docker image"
-    - docker build -f package/Dockerfile -t build-image:latest .
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    - docker image tag build-image:latest $APP_IMAGE_TAG
-    - docker image tag build-image:latest $APP_IMAGE_REF
-    - docker push $APP_IMAGE_TAG
-    - docker push $APP_IMAGE_REF
+# build-api-docker-image:
+#   extends: .api-changes
+#   stage: build-api
+#   image: docker:19.03.12
+#   services:
+#     - docker:19.03.12-dind
+#   script:
+#     - echo "Building docker image"
+#     - docker build -f package/Dockerfile -t build-image:latest .
+#     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+#     - docker image tag build-image:latest $APP_IMAGE_TAG
+#     - docker image tag build-image:latest $APP_IMAGE_REF
+#     - docker push $APP_IMAGE_TAG
+#     - docker push $APP_IMAGE_REF
 
-deploy-api-staging:
-  extends:
-    - .api-changes
-    - .heroku-changes
-  stage: deploy-api
-  image: node:15.4.0-buster
-  script:
-    - apt-get update -qy
-    - apt-get install -y ruby-dev
-    - gem install dpl
-    # do the actual deploy
-    - dpl --provider=heroku --app=$HEROKU_STAGING_APP --api-key=$HEROKU_STAGING_API_KEY  # --skip-cleanup
-    - curl $HEROKU_STAGING_URL
-  environment:
-    name: staging
-    url: $HEROKU_STAGING_URL
+# deploy-api-staging:
+#   extends:
+#     - .api-changes
+#     - .heroku-changes
+#   stage: deploy-api
+#   image: node:15.4.0-buster
+#   script:
+#     - apt-get update -qy
+#     - apt-get install -y ruby-dev
+#     - gem install dpl
+#     # do the actual deploy
+#     - dpl --provider=heroku --app=$HEROKU_STAGING_APP --api-key=$HEROKU_STAGING_API_KEY  # --skip-cleanup
+#     - curl $HEROKU_STAGING_URL
+#   environment:
+#     name: staging
+#     url: $HEROKU_STAGING_URL
 
 deploy-api-production:
   tags:
     - shell
   extends:
     - .api-changes
-    - .heroku-changes
+    - .infra-changes
   stage: deploy-api
   image: docker:19.03.12
   services:
