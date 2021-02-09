@@ -170,6 +170,8 @@ deploy-api-staging:
     url: $HEROKU_STAGING_URL
 
 deploy-api-production:
+  tags:
+    - shell
   extends:
     - .api-changes
     - .heroku-changes
