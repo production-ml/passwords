@@ -145,16 +145,14 @@ build-api-docker-image:
     - docker:19.03.12-dind
   script:
     - echo "Building docker image"
-    - cp Pipfile package/ && cp Pipfile.lock package/
-    - cd package
-    - docker build -t build-image:latest .
+    - docker build -f package/Dockerfile -t build-image:latest .
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - docker image tag build-image:latest $APP_IMAGE_TAG
     - docker image tag build-image:latest $APP_IMAGE_REF
     - docker push $APP_IMAGE_TAG
     - docker push $APP_IMAGE_REF
 
-deploy-api-docker-image-staging:
+deploy-api-staging:
   extends:
     - .api-changes
     - .heroku-changes
@@ -167,6 +165,22 @@ deploy-api-docker-image-staging:
     # do the actual deploy
     - dpl --provider=heroku --app=$HEROKU_STAGING_APP --api-key=$HEROKU_STAGING_API_KEY  # --skip-cleanup
     - curl $HEROKU_STAGING_URL
+  environment:
+    name: staging
+    url: $HEROKU_STAGING_URL
+
+deploy-api-production:
+  extends:
+    - .api-changes
+    - .heroku-changes
+  stage: deploy-api
+  image: docker:19.03.12
+  services:
+    - docker:19.03.12-dind
+  script:
+    # this is alpine linux
+    - apk add --no-cache docker-compose
+    - docker-compose up --build --detach
   environment:
     name: staging
     url: $HEROKU_STAGING_URL
