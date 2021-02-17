@@ -15,7 +15,7 @@ password_model = PasswordLSTM(
 @app.route("/", methods=["POST", "GET"])
 def index():
     """Main form rendering"""
-    if request.method == 'POST':
+    if request.method == "POST":
         action = request.form["action"] == "predict"
         pw = request.form["password"]
         pass_freq = password_model.predict(pw)
@@ -25,5 +25,5 @@ def index():
 
 
 if __name__ == "__main__":
-    # for development set "debug=True"in app.run
+    # for development set "debug=True" in app.run
     app.run(host="0.0.0.0", threaded=False, debug=True)

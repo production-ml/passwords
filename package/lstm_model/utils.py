@@ -8,7 +8,9 @@ MAX_PASS_LEN = 42
 
 
 def rmsle(y_true, y_pred):
-    """Loss function"""
+    """
+    Loss function
+    """
     y_true = tf.cast(y_true, tf.float32)
     y_pred = tf.cast(y_pred, tf.float32)
     return tf.math.sqrt(
@@ -35,13 +37,9 @@ def list_merge(lstlst):
     return all
 
 
-def response_json(password: str,  freq: float):
+def response_json(password: str, freq: float):
     """Response formatting as json"""
     res = jsonify(
-        {
-            "status": "success",
-            "password": password,
-            "prediction": f"{freq:.1f}"
-        }
+        {"status": "success", "password": password, "prediction": f"{freq:.1f}"}
     )
     return res

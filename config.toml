@@ -1,6 +1,6 @@
 [project]
 data_dir = 'data/raw/'
-resources_path = 'lstm_model/resources/'
+resources_path = 'package/lstm_model/resources/'
 
 [model]
 embedding_dim = 16
