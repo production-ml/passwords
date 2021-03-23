@@ -30,8 +30,9 @@ class PasswordLSTM:
         self.data_dir = self.config["project"]["data_dir"]
         self.res_dir = self.config["project"]["resources_path"]
 
-        if not os.path.exists(self.data_dir):
-            os.makedirs(self.data_dir)
+        # do we really need this?
+        # if not os.path.exists(self.data_dir):
+        #     os.makedirs(self.data_dir)
 
         self.model = None
         if model_serialized:

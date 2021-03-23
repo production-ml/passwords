@@ -1,97 +1,192 @@
 stages:
   - test-pipeline
-  - train
+  - build-pipeline
+  - run-pipeline
+  - update-model
   - test-api
-  - build
-  - deploy
+  - build-api
+  - deploy-api
 
 # Change pip's cache directory to be inside the project directory since we can
 # only cache local items.
 variables:
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
   HEROKU_STAGING_URL: https://$HEROKU_STAGING_APP.herokuapp.com/
-  DOCKER_IMAGE: password_app
   # tells pipenv where to keep virtualenvs
   WORKON_HOME: venv/
+  MODEL_VERSION_PATH: "package/MODEL_VERSION"
+  # docker image details
+  PYTHON_VERSION: 3.8.5
+  PYTHON_IMAGE: python:${PYTHON_VERSION}-buster
+  PIPELINE_IMAGE_NAME: password-pipeline
+  PIPELINE_IMAGE_REF: $CI_REGISTRY_IMAGE/$PIPELINE_IMAGE_NAME:$CI_COMMIT_REF_SLUG
+  PIPELINE_IMAGE_TAG: $CI_REGISTRY_IMAGE/$PIPELINE_IMAGE_NAME:$CI_COMMIT_SHA
+  APP_IMAGE_NAME: password-app
+  APP_IMAGE_REF: $CI_REGISTRY_IMAGE/$APP_IMAGE_NAME:$CI_COMMIT_REF_SLUG
+  APP_IMAGE_TAG: $CI_REGISTRY_IMAGE/$APP_IMAGE_NAME:$CI_COMMIT_SHA
 
 # Pip's cache doesn't store the python packages
 # https://pip.pypa.io/en/stable/reference/pip_install/#caching
 # If you want to also cache the installed packages, you have to install
 # them in a virtualenv and cache it as well.
 cache:
+# untracked: true
  paths:
    - .cache/pip
    - venv/
    - .pyenv/cache
 
-train:
-  stage: train
-  image: python:3.8.5-buster
-  script:
-    - echo "Get data from kaggle"
-    - pip install kaggle
-    - kaggle competitions download -c dmia-sport-2019-fall-intro -f train.csv -p packages/app/data/raw/
-    - kaggle competitions download -c dmia-sport-2019-fall-intro -f Xtest.csv -p packages/app/data/raw/
-    - echo "Running ML training pipeline"
-    - python -V
-    - cd packages/app
-    - pip install pipenv
-    - pipenv install --deploy
-    - pipenv run python train.py
-    - ls -R .
+# define template which will execute jobs upon changes in ML pipeline
+# because we unite package for ML pipeline and ML api,
+# we need to carefully list here all files which changes shouldnt trigger CI/CD
+# so it is a tradeoff of simplifying development at the cost of complicating CI/CD management
+.pipeline-changes:
   only:
     changes:
-      - packages/app/VERSION
+      - package/lstm_model/**/*
+      - scripts/**/*
+      - Dockerfile
+      - Pipfile
+      - Pipfile.lock
+      - config.toml
 
-build:
-  stage: build
+# define template which will execute jobs upon changes in ML pipeline except schedules
+# (because Gitlab treat all files as changed upon schedule CI/CD execution)
+.pipeline-build:
+  extends: .pipeline-changes
+  except:
+    refs:
+      - schedules
+
+# define template which will execute jobs upon changes in ML API
+.api-changes:
+  only:
+    changes:
+      - package/**/*
+  except:
+    refs:
+      - schedules
+    changes:
+      - package/lstm_model/**/*
+
+.heroku-changes:
+  only:
+    changes:
+      # "extends" is able to merge hashes but not arrays, thus we need to mention package again
+      - package/**/*
+      - .slugignore
+      - Procfile
+      - runtime.txt
+  except:
+    refs:
+      - schedules
+
+.infra-changes:
+  only:
+    changes:
+      # "extends" is able to merge hashes but not arrays, thus we need to mention package again
+      - package/**/*
+      - config/**/*
+
+run-pytest-on-pipeline:
+  extends: .pipeline-build
+  stage: test-pipeline
+  image: $PYTHON_IMAGE
+  script:
+    - echo
+
+build-pipeline-docker-image:
+  extends: .pipeline-build
+  stage: build-pipeline
   image: docker:19.03.12
   services:
     - docker:19.03.12-dind
-  variables:
-    IMAGE_TAG_BRANCH: $CI_REGISTRY_IMAGE/$DOCKER_IMAGE:$CI_COMMIT_REF_SLUG
-    IMAGE_TAG: $CI_REGISTRY_IMAGE/$DOCKER_IMAGE:$CI_COMMIT_SHA
   script:
     - echo "Building docker image"
-    - cd packages/app
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    - docker build -t $IMAGE_TAG .
-    - docker push $IMAGE_TAG
-    - docker image tag $IMAGE_TAG $IMAGE_TAG_BRANCH
-    - docker push $IMAGE_TAG_BRANCH
-  only:
-    changes:
-      - packages/app/VERSION
+    - docker build -t $PIPELINE_IMAGE_TAG .
+    - docker push $PIPELINE_IMAGE_TAG
+    - docker image tag $PIPELINE_IMAGE_TAG $PIPELINE_IMAGE_REF
+    - docker push $PIPELINE_IMAGE_REF
 
-staging:
-  stage: deploy
+train-model:
+  extends: .pipeline-changes
+  stage: run-pipeline
+  image: $PIPELINE_IMAGE_REF
+  script:
+    - sh -ux ./scripts/run_pipeline.sh
+
+update-model-if-qualified:
+  extends: .pipeline-changes
+  stage: update-model
+  image: $PYTHON_IMAGE
+  script:
+    # checking if requirements.txt is up-to-date and updating if necessary
+    - pip install pipenv
+    - pipenv lock -r > package/requirements.txt
+    # bump semver version
+    - export VERSION=$(cat $MODEL_VERSION_PATH | awk -F. -v OFS=. 'NF==1{print ++$NF}; NF>1{$NF=sprintf("%0*d", length($NF), ($NF+1)); print}')
+    - echo $VERSION > $MODEL_VERSION_PATH
+    - echo $VERSION
+    # push changes to git
+    - git remote set-url origin https://dmiasport:${CI_PUSH_TOKEN}@gitlab.com/${CI_PROJECT_PATH}.git
+    - git config --global user.email "dmiasport@gmail.com"
+    - git config --global user.name "Gitlab Runner"
+    - git add $API_VERSION_PATH
+    - git add package/requirements.txt
+    - git commit -m "bump api version to ${VERSION}; update requirements if necessary"
+    - git push --follow-tags origin HEAD:$CI_COMMIT_REF_NAME
+
+run-pytest-on-api:
+  extends: .api-changes
+  stage: test-api
+  image: $PYTHON_IMAGE
+  script:
+    - echo
+
+build-api-docker-image:
+  extends: .api-changes
+  stage: build-api
+  image: docker:19.03.12
+  services:
+    - docker:19.03.12-dind
+  script:
+    - echo "Building docker image"
+    - docker build -f package/Dockerfile -t build-image:latest .
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker image tag build-image:latest $APP_IMAGE_TAG
+    - docker image tag build-image:latest $APP_IMAGE_REF
+    - docker push $APP_IMAGE_TAG
+    - docker push $APP_IMAGE_REF
+
+deploy-api-staging:
+  extends:
+    - .api-changes
+    - .heroku-changes
+  stage: deploy-api
   image: node:15.4.0-buster
   script:
     - apt-get update -qy
-    - apt-get install -y git ruby-dev tree
+    - apt-get install -y ruby-dev
     - gem install dpl
-    - cd packages/app
-    - tree -a .
-    # this is required because heroku use pip 9.0.2 with Pipfile.lock for python 3.8 runtime
-    - python3 -V
-    - "apt-get update || : && apt-get install python3-pip -y"
-    - pip3 install pipenv
-    # install pyenv to provide python 3.8 for pipenv
-    - curl https://pyenv.run | bash
-    - export PATH="/root/.pyenv/bin:$PATH"
-    - eval "$(pyenv init -)"
-    - eval "$(pyenv virtualenv-init -)"
-    - mkdir -p $(pyenv root)/cache
-    - pyenv install 3.8.5
-    - pipenv lock -r > requirements.txt
     # do the actual deploy
-    - dpl --provider=heroku --app=$HEROKU_STAGING_APP --api-key=$HEROKU_STAGING_API_KEY --skip-cleanup
+    - dpl --provider=heroku --app=$HEROKU_STAGING_APP --api-key=$HEROKU_STAGING_API_KEY  # --skip-cleanup
     - curl $HEROKU_STAGING_URL
   environment:
     name: staging
     url: $HEROKU_STAGING_URL
-  only:
-    refs:
-      - master
-#     changes:
-#       - packages/app/VERSION
+
+# more common approach would be to ssh to the server, git clone this repo and run docker-compose up
+# but gitlab-runner provide easier way to do that, basically executing ssh and git clone by itself
+deploy-api-production:
+  tags:
+    - shell
+  extends:
+    - .api-changes
+    - .infra-changes
+  stage: deploy-api
+  script:
+    - docker-compose up --build --detach
+  environment:
+    name: production
+    url: $PRODUCTION_URL
