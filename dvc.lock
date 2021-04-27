@@ -1,0 +1,31 @@
+schema: '2.0'
+stages:
+  download_data:
+    cmd: sh scripts/download_data.sh
+    deps:
+    - path: scripts/download_data.sh
+      md5: f6a0711ec90463e7061e8e3729ce7bb4
+      size: 198
+    outs:
+    - path: data/raw
+      md5: 7a59ba05b032cbc8e1777d607d3a906c.dir
+      size: 36673262
+      nfiles: 2
+  process_data:
+    cmd: python scripts/process_data.py data/raw/train.csv.zip data/raw/Xtest.csv.zip
+      data/processed/
+    deps:
+    - path: data/raw/Xtest.csv.zip
+      md5: 7dc3a479fd072c0c965bc63f799cbfa5
+      size: 9103136
+    - path: data/raw/train.csv.zip
+      md5: cc89cbe309169ee319523476f65521d9
+      size: 27570126
+    - path: scripts/process_data.py
+      md5: 70f1924948a75a72ec5094e3e8c3e9f2
+      size: 1579
+    outs:
+    - path: data/processed
+      md5: 7c26391ca8c726b9d5e006d7a32c7f84.dir
+      size: 52232080
+      nfiles: 3
