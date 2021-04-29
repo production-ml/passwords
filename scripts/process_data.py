@@ -19,6 +19,7 @@ def process(train_data: pd.DataFrame, test_data: pd.DataFrame) -> object:
     Basic processing of train and test data
     @param train_file: DataFrame for train data
     @param test_file: DataFrame for test data
+        test data could be some "golden set" in a real world scenario, used to validate model quality
     @return: train and test dataframes
     """
     # mimic the situation where data changes every day
@@ -28,11 +29,8 @@ def process(train_data: pd.DataFrame, test_data: pd.DataFrame) -> object:
 
     # some data processing
     train_data.dropna(inplace=True)
-    train_data.drop(columns="Times", inplace=True)
     train, val = split_data(train_data)
 
-    # this could be some "golden set" in a real world scenario, used to validate model quality
-    test_data.drop(columns="Id", inplace=True)
     return train, val, test_data
 
 
