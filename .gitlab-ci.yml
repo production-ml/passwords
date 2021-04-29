@@ -115,6 +115,7 @@ train-model:
   image: $PIPELINE_IMAGE_REF
   script:
     # - sh -ux ./scripts/run_pipeline.sh
+    - pip install dvc
     - dvc repro
     - cat metrics.json >> report.md
     # - cml-publish confusion_matrix.png --md >> report.md
