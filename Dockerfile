@@ -9,7 +9,7 @@ RUN curl -sL https://deb.nodesource.com/setup_12.x | bash
 RUN apt-get update
 RUN apt-get install -y nodejs
 RUN npm i -g @dvcorg/cml
-RUN sudo apt-get install -y libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev \
+RUN apt-get install -y libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev \
           librsvg2-dev libfontconfig-dev
 RUN npm install -g vega-cli vega-lite
 
