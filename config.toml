@@ -1,6 +1,8 @@
 [project]
-data_dir = 'data/raw/'
-resources_path = 'package/lstm_model/resources/'
+
+[columns]
+target = 'Times'
+Id = 'Id'
 
 [model]
 embedding_dim = 16
