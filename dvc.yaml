@@ -24,3 +24,7 @@ stages:
     metrics:
     - metrics.json:
         cache: false
+    params:
+    - config.toml:
+      - model.embedding_dim
+      - model.hidden_dim

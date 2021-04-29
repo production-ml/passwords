@@ -39,11 +39,15 @@ stages:
     - path: scripts/train.py
       md5: 586002dece86c385ef2e9032ca73a2d0
       size: 2083
+    params:
+      config.toml:
+        model.embedding_dim: 8
+        model.hidden_dim: 8
     outs:
     - path: metrics.json
-      md5: 96f322ec136cb8a312bb1b5b57bff4ff
+      md5: afcaf177f9a584261c548a0e28ca1a51
       size: 30
     - path: model
-      md5: 90f1a1aa8d3ff20a7787e6bd8345e466.dir
-      size: 3062991
+      md5: 09a429b91eb1d4918cea716d711335a9.dir
+      size: 3034365
       nfiles: 4
