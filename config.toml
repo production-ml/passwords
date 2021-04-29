@@ -5,5 +5,5 @@ target = 'Times'
 Id = 'Id'
 
 [model]
-embedding_dim = 8
-hidden_dim = 8
+embedding_dim = 1
+hidden_dim = 1
