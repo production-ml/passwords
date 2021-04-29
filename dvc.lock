@@ -29,3 +29,21 @@ stages:
       md5: 0cb29a93e8405231a8537c5af8a7577c.dir
       size: 63609231
       nfiles: 3
+  train_model:
+    cmd: PYTHONPATH=./package/ python scripts/train.py data/processed model
+    deps:
+    - path: data/processed
+      md5: 0cb29a93e8405231a8537c5af8a7577c.dir
+      size: 63609231
+      nfiles: 3
+    - path: scripts/train.py
+      md5: 586002dece86c385ef2e9032ca73a2d0
+      size: 2083
+    outs:
+    - path: metrics.json
+      md5: 96f322ec136cb8a312bb1b5b57bff4ff
+      size: 30
+    - path: model
+      md5: 90f1a1aa8d3ff20a7787e6bd8345e466.dir
+      size: 3062991
+      nfiles: 4
