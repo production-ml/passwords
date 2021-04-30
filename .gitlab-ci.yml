@@ -2,7 +2,6 @@ stages:
   - test-pipeline
   - build-pipeline
   - run-pipeline
-  - update-model
   - test-api
   - build-api
   - deploy-api
@@ -122,12 +121,12 @@ train-model:
     - cat metrics.json >> report.md
     # - cml-publish confusion_matrix.png --md >> report.md
     - cml-send-comment report.md
-
-update-model-if-qualified:
-  extends: .pipeline-changes
-  stage: update-model
-  image: $PYTHON_IMAGE
-  script:
+    - dvc push
+    # push changes to git
+    - git remote set-url origin https://dmiasport:${CI_PUSH_TOKEN}@gitlab.com/${CI_PROJECT_PATH}.git
+    - git config --global user.email "dmiasport@gmail.com"
+    - git config --global user.name "Gitlab Runner"
+    - git commit -am "changes after model training in Gitlab CI"
     # checking if requirements.txt is up-to-date and updating if necessary
     - pip install pipenv
     - pipenv lock -r > package/requirements.txt
@@ -136,12 +135,7 @@ update-model-if-qualified:
     - echo $VERSION > $MODEL_VERSION_PATH
     - echo $VERSION
     # push changes to git
-    - git remote set-url origin https://dmiasport:${CI_PUSH_TOKEN}@gitlab.com/${CI_PROJECT_PATH}.git
-    - git config --global user.email "dmiasport@gmail.com"
-    - git config --global user.name "Gitlab Runner"
-    - git add $API_VERSION_PATH
-    - git add package/requirements.txt
-    - git commit -m "bump api version to ${VERSION}; update requirements if necessary"
+    - git commit -am "bump api version to ${VERSION}; update requirements if necessary"
     - git push --follow-tags origin HEAD:$CI_COMMIT_REF_NAME
 
 run-pytest-on-api:

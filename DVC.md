@@ -16,3 +16,7 @@ dvc stage add -n train_model --force \
           -p config.toml:model.embedding_dim,model.hidden_dim \
           --metrics-no-cache metrics.json \
           PYTHONPATH=./package/ python scripts/train.py data/processed model
+
+
+To add service account key to Google Storage remote:
+dvc remote modify gcs credentialpath focus-pottery-308512-6e19939465d6.json
