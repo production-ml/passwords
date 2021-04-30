@@ -115,7 +115,7 @@ train-model:
   script:
     # - sh -ux ./scripts/run_pipeline.sh
     # TODO: нужно добавить dvc в Pipfile, но там возникает какая-то проблема с tensorflow-cpu при pipenv lock
-    - pip install dvc
+    - pip install dvc[all]
     # TODO: here we should use some persistent storage
     - dvc repro
     - cat metrics.json >> report.md
