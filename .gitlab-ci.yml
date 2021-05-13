@@ -79,20 +79,20 @@ cache:
     - if: '$CI_COMMIT_TAG != ""'
 
 .heroku-changes:
-  only:
-    changes:
+  rules:
+    - changes:
       # "extends" is able to merge hashes but not arrays, thus we need to mention package again
       - package/**/*
       - .slugignore
       - Procfile
       - runtime.txt
-  except:
-    refs:
-      - schedules
+  # except:
+  #   refs:
+  #     - schedules
 
 .infra-changes:
-  only:
-    changes:
+  rules:
+    - changes:
       # "extends" is able to merge hashes but not arrays, thus we need to mention package again
       - package/**/*
       - config/**/*
