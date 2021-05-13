@@ -4,17 +4,19 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-tensorflow-cpu = "==2.3.0"
-keras = "*"
 pandas = "*"
 sklearn = "*"
 toml = "*"
 loguru = "*"
 gunicorn = "*"
 flask = "*"
+keras = "*"
+tensorflow-cpu = "==2.3.0"
 
 [dev-packages]
 kaggle = "*"
+pylint = "*"
+flake8 = "*"
 
 [requires]
 python_full_version = "3.8.5"

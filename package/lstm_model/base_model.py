@@ -9,41 +9,33 @@ from keras.optimizers import Adam
 from loguru import logger
 import pandas as pd
 import pickle
-import toml
 import os
 import re
 
-
-from lstm_model.utils import rmsle, make_pass_token, list_merge
+# relative imports point to local modules instead of global
+from .utils import rmsle, make_pass_token, list_merge
 
 
 class PasswordLSTM:
     """ LSTM model to predict password frequency"""
 
-    def __init__(self, model_serialized=None, tokenizer=None):
+    def __init__(self, config, model_serialized=None, tokenizer=None):
         """
         Initialize model configuration
         @param model_serialized: model file
         @param tokenizer: tokenizer file
         """
-        self.config = toml.load("config.toml")
-        self.data_dir = self.config["project"]["data_dir"]
-        self.res_dir = self.config["project"]["resources_path"]
-
-        # do we really need this?
-        # if not os.path.exists(self.data_dir):
-        #     os.makedirs(self.data_dir)
-
+        self.config = config
         self.model = None
         if model_serialized:
             self.model = load_model(
-                os.path.join(self.res_dir, model_serialized),
+                model_serialized,
                 custom_objects={"rmsle": rmsle},
                 compile=False,
             )
         self.tokenizer = None
         if tokenizer:
-            self.tokenizer = os.path.join(self.res_dir, tokenizer)
+            self.tokenizer = tokenizer
 
     def predict(self, password: str) -> float:
         """Predict password frequency
@@ -53,28 +45,6 @@ class PasswordLSTM:
         token = make_pass_token(self.tokenizer, password)
         y_pred = self.model.predict(token, batch_size=1)
         return y_pred[0][0]
-
-    def _load_data(self, train_file: str, test_file: str) -> object:
-        """
-        Load and basic processing of train and test data
-        @param train_file: zip file for train data
-        @param test_file: zip file for test data
-        @return: y: pass frequency, full_df: train+test passes, n_train_recs: count of train records
-        """
-        train_data = pd.read_csv(
-            os.path.join(self.data_dir, train_file), compression="zip"
-        )
-        test_data = pd.read_csv(
-            os.path.join(self.data_dir, test_file), compression="zip"
-        )
-        train_data.dropna(inplace=True)
-        y = train_data.Times
-        train_data.drop(columns="Times", inplace=True)
-        test_data.drop(columns="Id", inplace=True)
-        full_df = train_data.append(test_data)
-        n_train_recs = train_data.shape[0]
-        logger.info("data loading .. done")
-        return y, full_df, n_train_recs
 
     @staticmethod
     def _process_pass_data(data):
@@ -112,7 +82,7 @@ class PasswordLSTM:
         @param tokenizer_name:
         @return: None
         """
-        full_name = os.path.join(self.res_dir, tokenizer_name)
+        full_name = tokenizer_name
         with open(full_name, "wb") as handle:
             pickle.dump(self.tokenizer, handle, protocol=pickle.HIGHEST_PROTOCOL)
         logger.info("save tokenizer .. done")
@@ -141,37 +111,7 @@ class PasswordLSTM:
         logger.info("split data .. done")
         return x_train, x_val, y_train, y_val, x_test
 
-    def fit(
-        self,
-        train_file: str,
-        test_file: str,
-        epochs: int,
-        batch_size: int,
-        test_size=0.1,
-        random_state=42,
-    ):
-        """
-        Train model
-        @param train_file:
-        @param test_file:
-        @param epochs:
-        @param batch_size:
-        @param test_size:
-        @param random_state:
-        """
-        y, full_df, n_train_recs = self._load_data(train_file, test_file)
-        full_df, max_pass_len, dict_len = self._process_pass_data(full_df)
-        data_tokenized = self._fit_tokenizer(full_df, dict_len, max_pass_len)
-        x_train, x_val, y_train, y_val, _ = self._split_data(
-            data_tokenized,
-            y,
-            test_size=test_size,
-            n_train_recs=n_train_recs,
-            random_state=random_state,
-        )
-        early_stopping = EarlyStopping(
-            monitor="val_loss", patience=2, verbose=0, mode="auto"
-        )
+    def get_model(self, dict_len, max_pass_len):
         model = Sequential()
         model.add(
             Embedding(
@@ -185,6 +125,48 @@ class PasswordLSTM:
         model.add(Dense(1))
         model.add(ReLU())
         model.compile(loss=rmsle, optimizer=Adam())
+        return model
+
+    @staticmethod
+    def process_data(train_data, test_data):
+        y = train_data.Times
+        train_data.drop(columns="Times", inplace=True)
+        full_df = train_data.append(test_data)
+        n_train_recs = train_data.shape[0]
+        return y, full_df, n_train_recs
+
+    def fit(
+        self,
+        train_data: pd.DataFrame,
+        test_data: [pd.DataFrame, None],
+        epochs: int,
+        batch_size: int,
+        test_size=0.1,
+        random_state=42,
+    ):
+        """
+        Train model
+        @param train_data:
+        @param test_data:
+        @param epochs:
+        @param batch_size:
+        @param test_size:
+        @param random_state:
+        """
+        y, full_df, n_train_recs = self.process_data(train_data, test_data)
+        full_df, max_pass_len, dict_len = self._process_pass_data(full_df)
+        data_tokenized = self._fit_tokenizer(full_df, dict_len, max_pass_len)
+        x_train, x_val, y_train, y_val, _ = self._split_data(
+            data_tokenized,
+            y,
+            test_size=test_size,
+            n_train_recs=n_train_recs,
+            random_state=random_state,
+        )
+        model = self.get_model(dict_len, max_pass_len)
+        early_stopping = EarlyStopping(
+            monitor="val_loss", patience=2, verbose=0, mode="auto"
+        )
         logger.info("train model .. start")
         hist = model.fit(
             x_train,
@@ -204,6 +186,6 @@ class PasswordLSTM:
         @param model_name:
         @return:
         """
-        self.model.save(os.path.join(self.res_dir, model_name))
+        self.model.save(model_name)
         logger.info("save model .. done")
         return None
