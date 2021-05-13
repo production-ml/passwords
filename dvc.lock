@@ -4,8 +4,8 @@ stages:
     cmd: sh scripts/download_data.sh
     deps:
     - path: scripts/download_data.sh
-      md5: f6a0711ec90463e7061e8e3729ce7bb4
-      size: 198
+      md5: b8ac9575299286fa2e33694258640ead
+      size: 216
     outs:
     - path: data/raw
       md5: 7a59ba05b032cbc8e1777d607d3a906c.dir
@@ -26,28 +26,28 @@ stages:
       size: 1480
     outs:
     - path: data/processed
-      md5: 0cb29a93e8405231a8537c5af8a7577c.dir
-      size: 63609231
+      md5: a0b11c13ea967beaffa7e44b9e57fa33.dir
+      size: 63611584
       nfiles: 3
   train_model:
     cmd: PYTHONPATH=./package/ python scripts/train.py data/processed model
     deps:
     - path: data/processed
-      md5: 0cb29a93e8405231a8537c5af8a7577c.dir
-      size: 63609231
+      md5: a0b11c13ea967beaffa7e44b9e57fa33.dir
+      size: 63611584
       nfiles: 3
     - path: scripts/train.py
-      md5: 586002dece86c385ef2e9032ca73a2d0
-      size: 2083
+      md5: c5c38908b0e55001c33cbf3495a0d9b0
+      size: 2049
     params:
       config.toml:
-        model.embedding_dim: 8
-        model.hidden_dim: 8
+        model.embedding_dim: 1
+        model.hidden_dim: 1
     outs:
     - path: metrics.json
-      md5: afcaf177f9a584261c548a0e28ca1a51
+      md5: f8ce2cabd3b8088f1ab6953440aa575b
       size: 30
     - path: model
-      md5: 09a429b91eb1d4918cea716d711335a9.dir
-      size: 3034365
+      md5: 54d98d1f77fce0fd6871c7534dea5afe.dir
+      size: 3022991
       nfiles: 4
