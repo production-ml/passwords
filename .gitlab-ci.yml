@@ -45,7 +45,7 @@ cache:
     changes:
       - package/lstm_model/**/*
       - scripts/**/*
-      - Dockerfile
+      - Dockerfile.pipeline
       - Pipfile
       - Pipfile.lock
       - config.toml
@@ -104,7 +104,7 @@ build-pipeline-docker-image:
   script:
     - echo "Building docker image"
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    - docker build -t $PIPELINE_IMAGE_TAG .
+    - docker build -t $PIPELINE_IMAGE_TAG -f Dockerfile.pipeline .
     - docker push $PIPELINE_IMAGE_TAG
     - docker image tag $PIPELINE_IMAGE_TAG $PIPELINE_IMAGE_REF
     - docker push $PIPELINE_IMAGE_REF
@@ -123,7 +123,7 @@ update-model-if-qualified:
   script:
     # checking if requirements.txt is up-to-date and updating if necessary
     - pip install pipenv
-    - pipenv lock -r > package/requirements.txt
+    - pipenv lock -r > requirements.txt
     # bump semver version
     - export VERSION=$(cat $MODEL_VERSION_PATH | awk -F. -v OFS=. 'NF==1{print ++$NF}; NF>1{$NF=sprintf("%0*d", length($NF), ($NF+1)); print}')
     - echo $VERSION > $MODEL_VERSION_PATH
@@ -133,7 +133,7 @@ update-model-if-qualified:
     - git config --global user.email "dmiasport@gmail.com"
     - git config --global user.name "Gitlab Runner"
     - git add $API_VERSION_PATH
-    - git add package/requirements.txt
+    - git add requirements.txt
     - git commit -m "bump api version to ${VERSION}; update requirements if necessary"
     - git push --follow-tags origin HEAD:$CI_COMMIT_REF_NAME
 
@@ -152,7 +152,7 @@ build-api-docker-image:
     - docker:19.03.12-dind
   script:
     - echo "Building docker image"
-    - docker build -f package/Dockerfile -t build-image:latest .
+    - docker build -f Dockerfile.app -t build-image:latest .
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - docker image tag build-image:latest $APP_IMAGE_TAG
     - docker image tag build-image:latest $APP_IMAGE_REF
