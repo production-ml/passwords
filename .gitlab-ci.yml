@@ -47,6 +47,9 @@ cache:
       - Pipfile
       - Pipfile.lock
       - config.toml
+  except:
+    refs:
+      - tags
 
 # define template which will execute jobs upon changes in ML pipeline except schedules
 # (because Gitlab treat all files as changed upon schedule CI/CD execution)
@@ -57,17 +60,23 @@ cache:
       - schedules
 
 # define template which will execute jobs upon changes in ML API
+# .api-changes:
+#   only:
+#     refs:
+#       - tags
+#     changes:
+#       - package/**/*
+#   except:
+#     refs:
+#       - schedules
+#     changes:
+#       - package/lstm_model/**/*
+# TODO: add except clauses
 .api-changes:
-  only:
-    refs:
-      - tags
-    changes:
+  rules:
+    - changes:
       - package/**/*
-  except:
-    refs:
-      - schedules
-    changes:
-      - package/lstm_model/**/*
+    - if: '$CI_COMMIT_TAG != ""'
 
 .heroku-changes:
   only:
