@@ -74,10 +74,9 @@ cache:
 # TODO: add except clauses
 .api-changes:
   rules:
-    - exists:
-      - Dockerfile
-    # - changes:
-    #   - package/**/*
+    - if: '$CI_COMMIT_TAG == null'
+      changes:
+      - package/**/*
     # - if: '$CI_COMMIT_TAG != null'
 
 .heroku-changes:
