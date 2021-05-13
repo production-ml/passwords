@@ -60,7 +60,8 @@ cache:
 # define template which will execute jobs upon changes in ML API
 .api-changes:
   only:
-    changes:
+    - tags
+    - changes:
       - package/**/*
   except:
     refs:
@@ -118,6 +119,7 @@ train-model:
     - pipenv lock -r > requirements.txt
     # TODO: нужно добавить dvc в Pipfile, но там возникает какая-то проблема с tensorflow-cpu при pipenv lock
     - pip install dvc[all]
+    - dvc pull
     - dvc repro
     - dvc push
     # push changes to git
