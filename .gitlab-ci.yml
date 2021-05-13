@@ -59,8 +59,9 @@ cache:
 # define template which will execute jobs upon changes in ML API
 .api-changes:
   only:
-    - tags
-    - changes:
+    refs:
+      - tags
+    changes:
       - package/**/*
   except:
     refs:
