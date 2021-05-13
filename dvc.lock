@@ -26,15 +26,15 @@ stages:
       size: 1480
     outs:
     - path: data/processed
-      md5: a0b11c13ea967beaffa7e44b9e57fa33.dir
-      size: 63611584
+      md5: 17eb3e9d12c372f3106f6da8fcd14012.dir
+      size: 63616040
       nfiles: 3
   train_model:
     cmd: PYTHONPATH=./package/ python scripts/train.py data/processed model
     deps:
     - path: data/processed
-      md5: a0b11c13ea967beaffa7e44b9e57fa33.dir
-      size: 63611584
+      md5: 17eb3e9d12c372f3106f6da8fcd14012.dir
+      size: 63616040
       nfiles: 3
     - path: scripts/train.py
       md5: c5c38908b0e55001c33cbf3495a0d9b0
@@ -45,9 +45,9 @@ stages:
         model.hidden_dim: 1
     outs:
     - path: metrics.json
-      md5: f8ce2cabd3b8088f1ab6953440aa575b
+      md5: 5f04bf63098bad4dc510c0facd9cf9d2
       size: 30
     - path: model
-      md5: 54d98d1f77fce0fd6871c7534dea5afe.dir
-      size: 3022991
+      md5: d143386c9e8912121c1b4f36f83b8834.dir
+      size: 3022643
       nfiles: 4
