@@ -20,9 +20,6 @@ RUN dvc checkout
 RUN rm -rf .dvc/cache
 
 # finally
-# COPY package .
-# COPY config.toml .
-COPY . .
 ENV FLASK_RUN_PORT=$PORT
 ENV PYTHONPATH=package
 
