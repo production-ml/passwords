@@ -11,11 +11,8 @@ RUN pip install pipenv
 RUN pipenv install --deploy --system
 
 # finally
-# COPY package .
-# COPY config.toml .
 COPY . .
-EXPOSE 5000
-ENV FLASK_RUN_PORT=5000
+ENV FLASK_RUN_PORT=$PORT
 ENV PYTHONPATH=package
 
 # run the command

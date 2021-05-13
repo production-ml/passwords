@@ -3,7 +3,7 @@ services:
   app:
     build:
       context: .
-      dockerfile: package/Dockerfile
+      dockerfile: Dockerfile.app
     environment:
       DUMMYENV: ml_api_dev
     depends_on:

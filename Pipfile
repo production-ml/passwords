@@ -15,6 +15,7 @@ flask = "*"
 
 [dev-packages]
 kaggle = "*"
+pytest = "*"
 
 [requires]
 python_full_version = "3.8.5"
