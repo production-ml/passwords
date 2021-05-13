@@ -113,35 +113,30 @@ train-model:
   stage: run-pipeline
   image: $PIPELINE_IMAGE_REF
   script:
-    # - sh -ux ./scripts/run_pipeline.sh
+    # checking if requirements.txt is up-to-date and updating if necessary
+    - pip install pipenv
+    - pipenv lock -r > requirements.txt
     # TODO: нужно добавить dvc в Pipfile, но там возникает какая-то проблема с tensorflow-cpu при pipenv lock
     - pip install dvc[all]
-    # TODO: here we should use some persistent storage
     - dvc repro
-    - cat metrics.json >> report.md
-    # - cml-publish confusion_matrix.png --md >> report.md
-    - cml-send-comment report.md
     - dvc push
     # push changes to git
     - git remote set-url origin https://dmiasport:${CI_PUSH_TOKEN}@gitlab.com/${CI_PROJECT_PATH}.git
     - git config --global user.email "dmiasport@gmail.com"
     - git config --global user.name "Gitlab Runner"
     - git commit -am "changes after model training in Gitlab CI"
-    # checking if requirements.txt is up-to-date and updating if necessary
-    - pip install pipenv
-    - pipenv lock -r > requirements.txt
     # bump semver version
+    # TODO: do this after quality check
     - export VERSION=$(cat $MODEL_VERSION_PATH | awk -F. -v OFS=. 'NF==1{print ++$NF}; NF>1{$NF=sprintf("%0*d", length($NF), ($NF+1)); print}')
     - echo $VERSION > $MODEL_VERSION_PATH
     - echo $VERSION
     # push changes to git
-    - git remote set-url origin https://dmiasport:${CI_PUSH_TOKEN}@gitlab.com/${CI_PROJECT_PATH}.git
-    - git config --global user.email "dmiasport@gmail.com"
-    - git config --global user.name "Gitlab Runner"
-    - git add $API_VERSION_PATH
-    - git add requirements.txt
-    - git commit -m "bump api version to ${VERSION}; update requirements if necessary"
+    - git commit -am "bump api version to ${VERSION}"
+    - git tag -a $VERSION
     - git push --follow-tags origin HEAD:$CI_COMMIT_REF_NAME
+    # send metrics and new data/models to gitlab comments
+    - cat metrics.json >> report.md
+    - cml-send-comment report.md
 
 run-pytest-on-api:
   extends: .api-changes
