@@ -13,7 +13,6 @@ variables:
   HEROKU_STAGING_URL: https://$HEROKU_STAGING_APP.herokuapp.com/
   # tells pipenv where to keep virtualenvs
   WORKON_HOME: venv/
-  MODEL_VERSION_PATH: "package/MODEL_VERSION"
   # docker image details
   PYTHON_VERSION: 3.8.5
   PYTHON_IMAGE: python:${PYTHON_VERSION}-buster
@@ -129,8 +128,7 @@ train-model:
     - git commit -am "changes after model training in Gitlab CI"
     # bump semver version
     # TODO: do this after quality check
-    - export VERSION=$(cat $MODEL_VERSION_PATH | awk -F. -v OFS=. 'NF==1{print ++$NF}; NF>1{$NF=sprintf("%0*d", length($NF), ($NF+1)); print}')
-    - echo $VERSION > $MODEL_VERSION_PATH
+    - export VERSION=$(git describe --abbrev=0 | awk -F. -v OFS=. 'NF==1{print ++$NF}; NF>1{$NF=sprintf("%0*d", length($NF), ($NF+1)); print}')
     - echo $VERSION
     # push changes to git
     - git commit -am "bump api version to ${VERSION}"
