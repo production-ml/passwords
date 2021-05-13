@@ -22,8 +22,8 @@ RUN rm -rf .dvc/cache
 # finally
 # COPY package .
 # COPY config.toml .
-EXPOSE 5000
-ENV FLASK_RUN_PORT=5000
+COPY . .
+ENV FLASK_RUN_PORT=$PORT
 ENV PYTHONPATH=package
 
 # run the command

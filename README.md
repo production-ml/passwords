@@ -39,3 +39,35 @@ To add service account key to Google Storage remote:
 ```
 dvc remote modify gcs credentialpath focus-pottery-308512-6e19939465d6.json
 ```
+
+## Heroku
+
+### build and test docker locally
+
+```
+docker build -t password_complexity -f Dockerfile.app .
+docker run -p 5000:5000 -e PORT=5000 docker.io/library/password_complexity
+```
+
+### deploy via package
+ <!-- install CLI via https://devcenter.heroku.com/articles/getting-started-with-python#set-up -->
+
+```
+heroku login
+heroku create
+heroku buildpacks:set heroku/python
+git push heroku feature/heroku-deploy-example:main
+heroku open
+```
+
+### deploy via docker
+```
+heroku container:login
+heroku stack:set container
+git push heroku feature/heroku-deploy-example:main
+heroku open
+```
+
+```
+heroku logs --tail
+```

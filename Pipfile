@@ -15,8 +15,7 @@ tensorflow-cpu = "==2.3.0"
 
 [dev-packages]
 kaggle = "*"
-pylint = "*"
-flake8 = "*"
+pytest = "*"
 
 [requires]
 python_full_version = "3.8.5"
