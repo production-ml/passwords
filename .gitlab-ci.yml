@@ -112,8 +112,13 @@ build-pipeline-docker-image:
 train-model:
   extends: .pipeline-changes
   stage: run-pipeline
+  # image: registry.gitlab.com/dmiasport/password-complexity/password-pipeline:master
   image: $PIPELINE_IMAGE_REF
   script:
+    # config git
+    - git remote set-url origin https://dmiasport:${CI_PUSH_TOKEN}@gitlab.com/${CI_PROJECT_PATH}.git
+    - git config --global user.email "dmiasport@gmail.com"
+    - git config --global user.name "Gitlab Runner"
     # checking if requirements.txt is up-to-date and updating if necessary
     - pip install pipenv
     - pipenv lock -r > requirements.txt
@@ -122,17 +127,12 @@ train-model:
     - dvc pull
     - dvc repro
     - dvc push
-    # push changes to git
-    - git remote set-url origin https://dmiasport:${CI_PUSH_TOKEN}@gitlab.com/${CI_PROJECT_PATH}.git
-    - git config --global user.email "dmiasport@gmail.com"
-    - git config --global user.name "Gitlab Runner"
-    - git commit -am "changes after model training in Gitlab CI"
     # bump semver version
     # TODO: do this after quality check
     - export VERSION=$(git describe --abbrev=0 | awk -F. -v OFS=. 'NF==1{print ++$NF}; NF>1{$NF=sprintf("%0*d", length($NF), ($NF+1)); print}')
     - echo $VERSION
     # push changes to git
-    - git commit -am "bump api version to ${VERSION}"
+    - git commit -am "model was retrained in CI, pushing changes, new version $VERSION" --allow-empty
     - git tag -a $VERSION -m "model was retrained in CI and tagged as new version $VERSION"
     - git push --follow-tags origin HEAD:$CI_COMMIT_REF_NAME
     # send metrics and new data/models to gitlab comments
