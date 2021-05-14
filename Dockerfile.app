@@ -15,7 +15,7 @@ RUN pip install dvc[all]
 # fetching code and model
 COPY . .
 # TODO: use specific tag stored in a file
-RUN dvc checkout
+RUN dvc pull
 # TODO: checkout only current files, we don't need the full cache
 RUN rm -rf .dvc/cache
 
