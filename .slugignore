@@ -2,3 +2,6 @@
 # without Pipfile and Pipfile.lock heroku will use requirements.txt
 Pipfile
 Pipfile.lock
+data
+scripts
+notebooks

@@ -193,10 +193,19 @@ deploy-api-staging:
   image: node:15.4.0-buster
   script:
     - apt-get update -qy
+    # install dpl tool for deploy
     - apt-get install -y ruby-dev
     - gem install dpl
+    # install dvc to pull model from remote storage
+    - apt-get install -y cmake
+    - apt-get install -y python3-pip
+    - pip3 install -U pip
+    - pip3 install dvc[all]
+    - dvc pull
+    - rm -rf .dvc
     # do the actual deploy
-    - dpl --provider=heroku --app=$HEROKU_STAGING_APP --api-key=$HEROKU_STAGING_API_KEY  # --skip-cleanup
+    - dpl --provider=heroku --app=$HEROKU_STAGING_APP --api-key=$HEROKU_STAGING_API_KEY  --skip-cleanup
+    # TODO: check model is up by sending request to the endpoint
     - curl $HEROKU_STAGING_URL
   environment:
     name: staging
