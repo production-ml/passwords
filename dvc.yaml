@@ -15,7 +15,7 @@ stages:
     outs:
     - data/processed
   train_model:
-    cmd: PYTHONPATH=./package/ python scripts/train.py data/processed model
+    cmd: python scripts/train.py data/processed model
     deps:
     - data/processed
     - scripts/train.py

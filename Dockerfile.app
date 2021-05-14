@@ -22,9 +22,8 @@ RUN rm -rf .dvc/cache
 # set env vars
 # heroku will supply PORT value, and you should supply it yourself when running
 ENV FLASK_RUN_PORT=$PORT
-ENV PYTHONPATH=package
 
 # run the command
 RUN useradd -m myuser
 USER myuser
-CMD ["python", "package/app.py"]
+CMD ["python", "app/app.py"]
