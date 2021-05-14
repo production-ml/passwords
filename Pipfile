@@ -4,14 +4,13 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
+pip = "*"
 pandas = "*"
-sklearn = "*"
 toml = "*"
 loguru = "*"
 gunicorn = "*"
 flask = "*"
-keras = "*"
-tensorflow-cpu = "==2.3.0"
+lstm-model = {editable = true, path = "./packages/lstm_model"}
 
 [dev-packages]
 kaggle = "*"
