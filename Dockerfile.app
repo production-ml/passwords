@@ -19,7 +19,8 @@ RUN dvc pull
 # TODO: checkout only current files, we don't need the full cache
 RUN rm -rf .dvc/cache
 
-# finally
+# set env vars
+# heroku will supply PORT value, and you should supply it yourself when running
 ENV FLASK_RUN_PORT=$PORT
 ENV PYTHONPATH=package
 
