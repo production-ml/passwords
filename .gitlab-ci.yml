@@ -58,26 +58,21 @@ cache:
   except:
     refs:
       - schedules
+      - tags
 
 # define template which will execute jobs upon changes in ML API
-# .api-changes:
-#   only:
-#     refs:
-#       - tags
-#     changes:
-#       - package/**/*
-#   except:
-#     refs:
-#       - schedules
-#     changes:
-#       - package/lstm_model/**/*
-# TODO: add except clauses
 .api-changes:
   rules:
     - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH
       changes:
       - package/**/*
     - if: '$CI_COMMIT_TAG != null'
+# TODO: add except clauses
+#   except:
+#     refs:
+#       - schedules
+#     changes:
+#       - package/lstm_model/**/*
 
 .heroku-changes:
   rules:
@@ -87,6 +82,7 @@ cache:
       - .slugignore
       - Procfile
       - runtime.txt
+# TODO: add except clauses
   # except:
   #   refs:
   #     - schedules
