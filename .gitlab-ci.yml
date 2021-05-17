@@ -146,8 +146,6 @@ train-model:
     # checking if requirements.txt is up-to-date and updating if necessary
     - pip install pipenv
     - pipenv lock -r > requirements.txt
-    # TODO: нужно добавить dvc в Pipfile, но там возникает какая-то проблема с tensorflow-cpu при pipenv lock
-    - pip install dvc[all]
     - dvc pull
     - dvc repro
     - dvc push

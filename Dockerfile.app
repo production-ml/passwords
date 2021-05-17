@@ -5,12 +5,10 @@ RUN mkdir /${PROJNAME}
 WORKDIR /${PROJNAME}
 
 # python packages
+RUN pip install pipenv
 COPY Pipfile .
 COPY Pipfile.lock .
-RUN pip install pipenv
 RUN pipenv install --deploy --system
-# TODO: move dvc to Pipfile
-RUN pip install dvc[all]
 
 # fetching code and model
 COPY . .
