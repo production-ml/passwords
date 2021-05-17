@@ -8,6 +8,7 @@ WORKDIR /${PROJNAME}
 RUN pip install pipenv
 COPY Pipfile .
 COPY Pipfile.lock .
+COPY packages packages
 RUN pipenv install --deploy --system
 
 # fetching code and model
