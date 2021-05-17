@@ -4,7 +4,6 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-pip = "*"
 pandas = "*"
 toml = "*"
 gunicorn = "*"
@@ -12,8 +11,10 @@ flask = "*"
 lstm-model = {editable = true, path = "./packages/lstm_model"}
 
 [dev-packages]
+pip = "*"
 kaggle = "*"
 pytest = "*"
+dvc = {version = "*", extras = ["all"]}
 
 [requires]
 python_full_version = "3.8.5"
