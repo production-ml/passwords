@@ -45,9 +45,9 @@ stages:
         model.hidden_dim: 1
     outs:
     - path: metrics.json
-      md5: 3aa58b968dab526d828d01915bb116bc
+      md5: dca04466c72117734a2142ee09e86e0f
       size: 30
     - path: model
-      md5: 5f106865b3704ec424e3ce0ebeeda3c4.dir
-      size: 3023025
-      nfiles: 4
+      md5: c841cff1b0b1f7c6af0e93e11d507004.dir
+      size: 3098803
+      nfiles: 5
