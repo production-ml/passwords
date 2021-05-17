@@ -9,12 +9,12 @@ toml = "*"
 gunicorn = "*"
 flask = "*"
 lstm-model = {editable = true, path = "./packages/lstm_model"}
+# TODO: dvc should in dev-packages, but it is required in api docker image to checkout a model
+dvc = {version = "*", extras = ["all"]}
 
 [dev-packages]
-pip = "*"
 kaggle = "*"
 pytest = "*"
-dvc = {version = "*", extras = ["all"]}
 
 [requires]
 python_full_version = "3.8.5"
