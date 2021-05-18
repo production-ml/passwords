@@ -1,14 +1,21 @@
+import os
+import toml
+
 from flask import Flask, request, jsonify, render_template
 from lstm_model.base_model import PasswordLSTM
 from lstm_model.utils import response_json
 
 # Flask instance
 app = Flask(__name__)
-
+config = toml.load("config.toml")
+# TODO: model_folder should be in config
+model_folder = "model"
 
 # Model class instance
 password_model = PasswordLSTM(
-    model_serialized="one_epoch_model", tokenizer="tokenizer.pickle"
+    config=config,
+    model_serialized=os.path.join(model_folder, "one_epoch_model"),
+    tokenizer=os.path.join(model_folder, "tokenizer.pickle"),
 )
 
 

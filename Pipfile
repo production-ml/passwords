@@ -4,14 +4,13 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-tensorflow-cpu = "==2.3.0"
-keras = "*"
 pandas = "*"
-sklearn = "*"
 toml = "*"
-loguru = "*"
 gunicorn = "*"
 flask = "*"
+lstm-model = {editable = true, path = "./packages/lstm_model"}
+# TODO: dvc should in dev-packages, but it is required in api docker image to checkout a model
+dvc = {version = "*", extras = ["all"]}
 
 [dev-packages]
 kaggle = "*"

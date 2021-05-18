@@ -1,0 +1,30 @@
+stages:
+  download_data:
+    cmd: sh scripts/download_data.sh
+    deps:
+    - scripts/download_data.sh
+    outs:
+    - data/raw
+  process_data:
+    cmd: python scripts/process_data.py data/raw/train.csv.zip data/raw/Xtest.csv.zip
+      data/processed/
+    deps:
+    - data/raw/Xtest.csv.zip
+    - data/raw/train.csv.zip
+    - scripts/process_data.py
+    outs:
+    - data/processed
+  train_model:
+    cmd: python scripts/train.py data/processed model
+    deps:
+    - data/processed
+    - scripts/train.py
+    outs:
+    - model
+    metrics:
+    - metrics.json:
+        cache: false
+    params:
+    - config.toml:
+      - model.embedding_dim
+      - model.hidden_dim
