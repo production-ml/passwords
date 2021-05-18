@@ -34,6 +34,8 @@ cache:
    - venv/
    - .pyenv/cache
 
+# === TEMPLATES DEFINITIONS ===
+
 # define template which will execute jobs upon changes in ML pipeline
 # because we unite package for ML pipeline and ML api,
 # we need to carefully list here all files which changes shouldnt trigger CI/CD
@@ -109,8 +111,12 @@ cache:
       - Dockerfile.app
       - config/**/*
       when: manual
+      allow_failure: true
     - if: '$CI_COMMIT_TAG != null'
       when: manual
+      allow_failure: true
+
+# === JOBS DEFINITIONS ===
 
 run-pytest-on-pipeline:
   extends: .pipeline-build
