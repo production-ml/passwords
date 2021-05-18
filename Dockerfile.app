@@ -13,10 +13,10 @@ RUN pipenv install --deploy --system
 
 # fetching code and model
 COPY . .
-# TODO: use specific tag stored in a file
-RUN dvc pull
-# TODO: checkout only current files, we don't need the full cache
-RUN rm -rf .dvc/cache
+# TODO: we download the latest artifact and can't deploy any other version with CI/CD
+# to improve, we could use a specific tag stored in a file or something else
+# TODO: dvc should not be installed in the docker image, but in the building environment
+RUN dvc get . model
 
 # set env vars
 # heroku will supply PORT value, and you should supply it yourself when running
