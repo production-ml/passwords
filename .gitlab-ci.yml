@@ -2,7 +2,6 @@ stages:
   - test-pipeline
   - build-pipeline
   - run-pipeline
-  - update-model
   - test-api
   - build-api
   - deploy-api
@@ -14,7 +13,6 @@ variables:
   HEROKU_STAGING_URL: https://$HEROKU_STAGING_APP.herokuapp.com/
   # tells pipenv where to keep virtualenvs
   WORKON_HOME: venv/
-  MODEL_VERSION_PATH: "package/MODEL_VERSION"
   # docker image details
   PYTHON_VERSION: 3.8.5
   PYTHON_IMAGE: python:${PYTHON_VERSION}-buster
@@ -36,6 +34,8 @@ cache:
    - venv/
    - .pyenv/cache
 
+# === TEMPLATES DEFINITIONS ===
+
 # define template which will execute jobs upon changes in ML pipeline
 # because we unite package for ML pipeline and ML api,
 # we need to carefully list here all files which changes shouldnt trigger CI/CD
@@ -43,12 +43,15 @@ cache:
 .pipeline-changes:
   only:
     changes:
-      - package/lstm_model/**/*
+      - packages/**/*
       - scripts/**/*
       - Dockerfile.pipeline
       - Pipfile
       - Pipfile.lock
       - config.toml
+  except:
+    refs:
+      - tags
 
 # define template which will execute jobs upon changes in ML pipeline except schedules
 # (because Gitlab treat all files as changed upon schedule CI/CD execution)
@@ -57,36 +60,63 @@ cache:
   except:
     refs:
       - schedules
+      - tags
 
 # define template which will execute jobs upon changes in ML API
 .api-changes:
-  only:
-    changes:
-      - package/**/*
-  except:
-    refs:
-      - schedules
-    changes:
-      - package/lstm_model/**/*
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH
+      changes:
+      - packages/**/*
+      when: never
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH
+      changes:
+      - app/**/*
+      - Dockerfile.app
+    - if: '$CI_COMMIT_TAG != null'
 
+# "extends" is able to merge hashes but not arrays, thus we need to repeat everything
+# another option is to use .api-changes instead of .heroku-changes and .infra-changes
 .heroku-changes:
-  only:
-    changes:
-      # "extends" is able to merge hashes but not arrays, thus we need to mention package again
-      - package/**/*
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH
+      changes:
+      - packages/**/*
+      when: never
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH
+      changes:
+      - app/**/*
+      - Dockerfile.app
       - .slugignore
       - Procfile
       - runtime.txt
-  except:
-    refs:
-      - schedules
+    - if: '$CI_COMMIT_TAG != null'
 
+# "extends" is able to merge hashes but not arrays, thus we need to repeat everything
 .infra-changes:
-  only:
-    changes:
-      # "extends" is able to merge hashes but not arrays, thus we need to mention package again
-      - package/**/*
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH
+      changes:
+      - packages/**/*
+      when: never
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH
+      changes:
+      - app/**/*
+      - Dockerfile.app
       - config/**/*
+      when: manual
+      allow_failure: true
+    - if: '$CI_COMMIT_TAG != null'
+      when: manual
+      allow_failure: true
+
+# === JOBS DEFINITIONS ===
 
 run-pytest-on-pipeline:
   extends: .pipeline-build
@@ -112,30 +142,30 @@ build-pipeline-docker-image:
 train-model:
   extends: .pipeline-changes
   stage: run-pipeline
+  # image: registry.gitlab.com/dmiasport/password-complexity/password-pipeline:master
   image: $PIPELINE_IMAGE_REF
   script:
-    - sh -ux ./scripts/run_pipeline.sh
-
-update-model-if-qualified:
-  extends: .pipeline-changes
-  stage: update-model
-  image: $PYTHON_IMAGE
-  script:
-    # checking if requirements.txt is up-to-date and updating if necessary
-    - pip install pipenv
-    - pipenv lock -r > requirements.txt
-    # bump semver version
-    - export VERSION=$(cat $MODEL_VERSION_PATH | awk -F. -v OFS=. 'NF==1{print ++$NF}; NF>1{$NF=sprintf("%0*d", length($NF), ($NF+1)); print}')
-    - echo $VERSION > $MODEL_VERSION_PATH
-    - echo $VERSION
-    # push changes to git
+    # config git
     - git remote set-url origin https://dmiasport:${CI_PUSH_TOKEN}@gitlab.com/${CI_PROJECT_PATH}.git
     - git config --global user.email "dmiasport@gmail.com"
     - git config --global user.name "Gitlab Runner"
-    - git add $API_VERSION_PATH
-    - git add requirements.txt
-    - git commit -m "bump api version to ${VERSION}; update requirements if necessary"
+    # checking if requirements.txt is up-to-date and updating if necessary
+    - pip install pipenv
+    - pipenv lock -r > requirements.txt
+    - dvc pull
+    - dvc repro
+    - dvc push
+    # bump semver version
+    # TODO: do this after quality check
+    - export VERSION=$(git describe --abbrev=0 | awk -F. -v OFS=. 'NF==1{print ++$NF}; NF>1{$NF=sprintf("%0*d", length($NF), ($NF+1)); print}')
+    - echo $VERSION
+    # push changes to git
+    - git commit -am "model was retrained in CI, pushing changes, new version $VERSION" --allow-empty
+    - git tag -a $VERSION -m "model was retrained in CI and tagged as new version $VERSION"
     - git push --follow-tags origin HEAD:$CI_COMMIT_REF_NAME
+    # send metrics and new data/models to gitlab comments
+    - cat metrics.json >> report.md
+    - cml-send-comment report.md
 
 run-pytest-on-api:
   extends: .api-changes
@@ -152,7 +182,7 @@ build-api-docker-image:
     - docker:19.03.12-dind
   script:
     - echo "Building docker image"
-    - docker build -f Dockerfile.app -t build-image:latest .
+    - docker build -f Dockerfile.app -t build-image:latest --build-arg GOOGLE_APPLICATION_CREDENTIALS .
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - docker image tag build-image:latest $APP_IMAGE_TAG
     - docker image tag build-image:latest $APP_IMAGE_REF
@@ -160,17 +190,25 @@ build-api-docker-image:
     - docker push $APP_IMAGE_REF
 
 deploy-api-staging:
+  # TODO: extends now is not working as before, as arrays don't merge. Fix this
   extends:
-    - .api-changes
     - .heroku-changes
   stage: deploy-api
   image: node:15.4.0-buster
   script:
     - apt-get update -qy
+    # install dpl tool for deploy
     - apt-get install -y ruby-dev
     - gem install dpl
+    # install dvc to pull model from remote storage
+    - apt-get install -y cmake
+    - apt-get install -y python3-pip
+    - pip3 install -U pip
+    - pip3 install dvc[all]
+    - dvc get . model
     # do the actual deploy
-    - dpl --provider=heroku --app=$HEROKU_STAGING_APP --api-key=$HEROKU_STAGING_API_KEY  # --skip-cleanup
+    - dpl --provider=heroku --app=$HEROKU_STAGING_APP --api-key=$HEROKU_STAGING_API_KEY  --skip-cleanup
+    # TODO: check model is up by sending request to the endpoint
     - curl $HEROKU_STAGING_URL
   environment:
     name: staging
@@ -181,8 +219,8 @@ deploy-api-staging:
 deploy-api-production:
   tags:
     - shell
+  # TODO: extends now is not working as before, as arrays don't merge. Fix this
   extends:
-    - .api-changes
     - .infra-changes
   stage: deploy-api
   script:

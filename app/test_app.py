@@ -9,8 +9,8 @@ def client():
 
 
 def test_integration_response(client):
-    rv = client.get('/')
-    assert b'DMIA' in rv.data
+    rv = client.get("/")
+    assert b"DMIA" in rv.data
 
 
 def test_unit_unpopular_password():
