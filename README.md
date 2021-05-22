@@ -14,6 +14,16 @@ To commit changes, first run `pre-commit install`. If you have no pre-commit ins
 
 ## DVC
 
+To fetch artifacts from repo (including model binary), you should run:
+
+```
+dvc pull
+```
+
+This should be done before you try to run heroku locally, as a app/ folder depends on the trained model. Otherwise you can just run `dvc repro` to get these artifacts produced by running scripts.
+
+### Few commands for demo later (you don't need to run this)
+
 ```
 dvc stage add -n download_data \
           -d scripts/download_data.sh \
