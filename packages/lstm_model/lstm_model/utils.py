@@ -22,8 +22,6 @@ def rmsle(y_true, y_pred):
 
 def make_pass_token(tokenizer, password: str):
     """Return sequence of tokens from password"""
-    with open(tokenizer, "rb") as handle:
-        tokenizer = pickle.load(handle)
     password = " ".join(re.findall("\S", str(password)))
     tokens = tokenizer.texts_to_sequences([password])
     tokens = pad_sequences(tokens, MAX_PASS_LEN, padding="post")

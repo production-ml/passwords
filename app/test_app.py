@@ -19,5 +19,5 @@ def test_unit_unpopular_password():
 
 
 def test_unit_popular_password():
-    popularity = app.password_model.predict("123")
+    popularity = app.password_model.predict("qwerty")
     assert popularity > 15

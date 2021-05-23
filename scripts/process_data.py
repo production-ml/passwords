@@ -41,6 +41,6 @@ if __name__ == "__main__":
 
     train, val, test = process(train_data, test_data)
     os.mkdir(output_folder)
-    train.to_csv(os.path.join(output_folder, "train.csv"))
-    val.to_csv(os.path.join(output_folder, "val.csv"))
-    test.to_csv(os.path.join(output_folder, "test.csv"))
+    train.to_csv(os.path.join(output_folder, "train.csv"), index=False)
+    val.to_csv(os.path.join(output_folder, "val.csv"), index=False)
+    test.to_csv(os.path.join(output_folder, "test.csv"), index=False)
