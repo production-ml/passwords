@@ -71,6 +71,7 @@ class PasswordLSTM:
             lambda x: " ".join(re.findall("\S", str(x)))
         )
         chars = data["Password"].apply(lambda x: str(x).split(" ")).values
+
         chars_dict = set(list_merge(chars))
         dict_len = len(chars_dict)
         max_pass_len = data["len"].max()
@@ -94,8 +95,7 @@ class PasswordLSTM:
         @param tokenizer_name:
         @return: None
         """
-        full_name = tokenizer_name
-        with open(full_name, "wb") as handle:
+        with open(tokenizer_name, "wb") as handle:
             pickle.dump(self.tokenizer, handle, protocol=pickle.HIGHEST_PROTOCOL)
         logger.info("save tokenizer .. done")
         return None
