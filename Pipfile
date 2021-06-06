@@ -19,3 +19,6 @@ ipython = "*"
 
 [requires]
 python_full_version = "3.8.5"
+
+[pipenv]
+allow_prereleases = true
