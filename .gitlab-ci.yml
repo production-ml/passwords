@@ -165,8 +165,8 @@ train-model:
     - git tag -a $VERSION -m "model was retrained in CI and tagged as new version $VERSION"
     - git push --follow-tags origin HEAD:$CI_COMMIT_REF_NAME
     # send metrics and new data/models to gitlab comments
-    - cat metrics.json >> report.md
-    - cml-send-comment report.md
+    # - cat metrics.json >> report.md
+    # - cml-send-comment report.md
 
 run-pytest-on-api:
   extends: .api-changes
