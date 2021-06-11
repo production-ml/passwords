@@ -153,12 +153,14 @@ train-model:
     # checking if requirements.txt is up-to-date and updating if necessary
     - pip install pipenv
     - pipenv lock -r > requirements.txt
-    - dvc pull
+    - dvc pull --run-cache
     - dvc repro
-    - dvc push
+    - dvc push --run-cache
     # bump semver version
     # TODO: do this after quality check
-    - export VERSION=$(git describe --abbrev=0 | awk -F. -v OFS=. 'NF==1{print ++$NF}; NF>1{$NF=sprintf("%0*d", length($NF), ($NF+1)); print}')
+    # TODO: this will fail to work properly if there will be a non-related tag with letters
+    # this a workaround that needs to be fixed
+    - export VERSION=$(git tag | grep -o '[0-9]*' | sort -n | tail -1 | awk -F. -v OFS=. 'NF==1{print ++$NF}; NF>1{$NF=sprintf("%0*d", length($NF), ($NF+1)); print}')
     - echo $VERSION
     # push changes to git
     - git commit -am "model was retrained in CI, pushing changes, new version $VERSION" --allow-empty
