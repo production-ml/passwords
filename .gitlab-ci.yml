@@ -183,6 +183,7 @@ build-api-docker-image:
     - $DOCKER_IMAGE-dind
   script:
     # we use dvc here to download last model image
+    # TODO: store cache apk with gitlab to speed up installation
     # some magic to install dvc in alpine image follows:
     - apk add libressl-dev musl-dev libffi-dev gcc python3 py3-pip python3-dev git libgit2 libgit2-dev
     - pip install -U pip

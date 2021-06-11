@@ -3,14 +3,14 @@ import os
 import re
 from typing import Union
 
-from keras.models import load_model
-from keras.preprocessing.text import Tokenizer
-from keras.preprocessing.sequence import pad_sequences
 from sklearn.model_selection import train_test_split
-from keras.models import Sequential
-from keras.callbacks import EarlyStopping
-from keras.layers import Dense, Activation, LSTM, ReLU, Embedding
-from keras.optimizers import Adam
+from tensorflow.keras.models import load_model
+from tensorflow.keras.preprocessing.text import Tokenizer
+from tensorflow.keras.preprocessing.sequence import pad_sequences
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras.layers import Dense, Activation, LSTM, ReLU, Embedding
+from tensorflow.keras.optimizers import Adam
 from loguru import logger
 import pandas as pd
 import numpy as np
