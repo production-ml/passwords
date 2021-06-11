@@ -14,6 +14,7 @@ variables:
   # tells pipenv where to keep virtualenvs
   WORKON_HOME: venv/
   # docker image details
+  DOCKER_IMAGE: docker:20.10.7
   PYTHON_VERSION: 3.8.5
   PYTHON_IMAGE: python:${PYTHON_VERSION}-buster
   PIPELINE_IMAGE_NAME: password-pipeline
@@ -128,9 +129,9 @@ run-pytest-on-pipeline:
 build-pipeline-docker-image:
   extends: .pipeline-build
   stage: build-pipeline
-  image: docker:19.03.12
+  image: $DOCKER_IMAGE
   services:
-    - docker:19.03.12-dind
+    - $DOCKER_IMAGE-dind
   script:
     - echo "Building docker image"
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
@@ -177,12 +178,24 @@ run-pytest-on-api:
 build-api-docker-image:
   extends: .api-changes
   stage: build-api
-  image: docker:19.03.12
+  image: $DOCKER_IMAGE
   services:
-    - docker:19.03.12-dind
+    - $DOCKER_IMAGE-dind
   script:
+    # we use dvc here to download last model image
+    # some magic to install dvc in alpine image follows:
+    - apk add libressl-dev musl-dev libffi-dev gcc python3 py3-pip python3-dev git libgit2 libgit2-dev
+    - pip install -U pip
+    - pip install dvc[gs]
+    # TODO: we download the latest artifact and can't deploy any other version with CI/CD now
+    # to improve, we could use a specific tag stored in a file or something else
+    # gitlab fetches only HEAD and dvc fails with an error: "dvc" unknown Git revision 'refs/remotes/origin/HEAD'
+    # to avoid this we create a temporal branch
+    - git checkout -b temp-branch
+    - dvc get . model
+    # building docker image, supplying model/ folder to image
     - echo "Building docker image"
-    - docker build -f Dockerfile.app -t build-image:latest --build-arg GOOGLE_APPLICATION_CREDENTIALS .
+    - docker build -f Dockerfile.app -t build-image:latest .
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - docker image tag build-image:latest $APP_IMAGE_TAG
     - docker image tag build-image:latest $APP_IMAGE_REF
