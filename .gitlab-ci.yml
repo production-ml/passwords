@@ -221,7 +221,9 @@ deploy-api-staging:
     - apt-get install -y cmake
     - apt-get install -y python3-pip
     - pip3 install -U pip
-    - pip3 install dvc[all]
+    - pip3 install dvc[gs]
+    # the workaround again as above
+    - git checkout -b temp-branch
     - dvc get . model
     # do the actual deploy
     - dpl --provider=heroku --app=$HEROKU_STAGING_APP --api-key=$HEROKU_STAGING_API_KEY  --skip-cleanup
